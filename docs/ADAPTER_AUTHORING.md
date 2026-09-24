@@ -67,9 +67,9 @@ Governance submission is mandatory. Current optional capabilities are:
 | `revocation` | Apply and acknowledge relevant authority revocation |
 | `human-review` | Observe approval, consumption and attempted replay |
 | `execution-accounting` | Observe native execution records sufficient to establish execution/no second execution |
-| `reconciliation` | Obtain native resolution of uncertain execution in the Gateway retry path |
+| `reconciliation` | Obtain native resolution of uncertain execution in the Gateway retry and crash-recovery paths |
 | `multi-principal` | Exercise separately authenticated principal/agent identities |
-| `durable-restart` | Replace the runtime process and reopen preserved governance state for the implemented restart driver; not crash/UNKNOWN recovery or CDE-history persistence |
+| `durable-restart` | Replace the runtime process and reopen preserved governance state for the implemented restart driver; does not by itself promise all crash semantics or CDE-history persistence |
 | `in-flight-observation` | Establish execution start and observe revocation/disposition ordering while outstanding |
 
 Declarations live beside adapters; requirements live in [`scenarios/registrations.ts`](../scenarios/registrations.ts). They are claims about configured integration paths, not automatic detection. Cancellation is not required for in-flight revocation. Human review, handoff and in-flight drivers/assertions currently remain RC2-specific; your capability flags alone do not port them.
@@ -121,4 +121,10 @@ npm run harness -- run --runtime subprocess \
 
 No source registration is needed. Use repeated `--command-arg` entries for argv (dash-prefixed values use `--command-arg=-u`), not a quoted shell command. Local code executes with your privileges. Omit `--runtime-id` for `external-subprocess`; stderr remains separate from JSONL stdout. `--json` uses the existing suite report format.
 
-All seven existing capability names are recognized, but only generic retry has a subprocess driver. Declarations do not implement new drivers: an applicable scenario without a driver fails. With only `revocation`, expect 1 PASS / 6 UNSUPPORTED. Without capabilities, expect 0 PASS / 7 UNSUPPORTED and no process launch. Unknown capabilities/options fail early. The driver closes the process in `finally` on success and failure; CLI usage validation finishes before driver creation.
+All seven existing capability names are recognized, but only generic retry has a subprocess driver. Declarations do not implement new drivers: an applicable scenario without a driver fails. With only `revocation`, expect 1 PASS / 7 UNSUPPORTED. Without capabilities, expect 0 PASS / 8 UNSUPPORTED and no process launch. Unknown capabilities/options fail early. The driver closes the process in `finally` on success and failure; CLI usage validation finishes before driver creation.
+
+## RC2 crash-recovery driver
+
+`unknown-restart.ts` is a scenario-specific compound experiment, not an extension to `RuntimeAdapter`. It uses existing execution-accounting, durable-restart and reconciliation capabilities. Process A dies by SIGKILL after a real effect and before terminal accounting commits. Process B acquires native evaluator ownership and invokes native recovery on the preserved store before normal Gateway operation. The native execution identity survives STARTED → UNKNOWN → reconciliation. The final state may remain unresolved if native reconciliation cannot establish an outcome.
+
+Reconciliation resolves uncertainty by inspecting evidence; it is not retry authority. The driver records native accounting alongside a separately labelled, durable harness journal of actual sandbox execute/reconcile calls. A different runtime needs its own observable startup/reconciliation boundary and no-redispatch proof, not RC2's lock or audit fields. No generic cancellation, retry or new governance decision is implied.

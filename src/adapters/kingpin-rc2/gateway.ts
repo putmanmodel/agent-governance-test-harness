@@ -64,7 +64,12 @@ export function translateEffects(requestId: string, evidence: Pick<GatewayEviden
   return { enforcement: permitted ? 'DISPATCH' : 'BLOCK', executions };
 }
 
-export async function createGatewayAdapter(original: GovernanceRequest, options: { persistent?: { root: string; create: boolean }; receiptFailure?: boolean; reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
+export async function createGatewayAdapter(original: GovernanceRequest, options: { persistent?: { root: string; create: boolean }; receiptFailure?: boolean;
+  terminalSuccess?: (event: RecordData) => void;
+  reconciled?: (evidence: unknown, outcome: string) => void;
+  recovery?: { lockFile: string; before(): void; after(count: number): void };
+  ownershipLock?: string;
+  reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
   const load = (file: string) => import(pathToFileURL(join(rc2Root, file)).href);
   const [kingpin, sqlite, gateway, sandboxModule, executionModule, authModule, cdeModule, config] = await Promise.all([
     load('kingpin/index.js'), load('kingpin/state/sqlite.js'), load('gateway_node/server.js'),
@@ -96,10 +101,14 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     store = new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: options.persistent?.create ?? true }) as Store;
     const authority = new kingpin.KingpinAuthority({ store });
     const sandboxAdapter = sandboxModule.createSandboxAdapter(sandbox);
-    const adapter = options.beforeEffect ? { ...sandboxAdapter, execute(request: RecordData) {
-      options.beforeEffect!(request);
+    const adapter = { ...sandboxAdapter, execute(request: RecordData) {
+      options.beforeEffect?.(request);
       return sandboxAdapter.execute(request);
-    } } : sandboxAdapter;
+    }, reconcile(evidence: unknown) {
+      const outcome = sandboxAdapter.reconcile(evidence);
+      options.reconciled?.(evidence, outcome);
+      return outcome;
+    } };
     // The same transaction-failure injection used by RC2's execution.test.js.
     // The real adapter writes; SQLite rolls back only the terminal receipt, not the file.
     let faultInjected = false;
@@ -108,6 +117,7 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
         const append = tx.audit.append;
         tx.audit.append = event => {
           const result = append(event);
+          if (event.event_type === 'tool.execution.succeeded') options.terminalSuccess?.(event);
           if (options.receiptFailure !== false && !faultInjected && event.event_type === 'tool.execution.succeeded') {
             faultInjected = true;
             throw new Error('Harness-injected terminal receipt transaction failure');
@@ -131,9 +141,11 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     // startCde spawns synchronously before awaiting readiness; prevent source-tree pycache writes.
     const previous = process.env.PYTHONDONTWRITEBYTECODE;
     let starting;
-    try { process.env.PYTHONDONTWRITEBYTECODE = '1'; starting = cdeModule.startCde(python); }
+    try { process.env.PYTHONDONTWRITEBYTECODE = '1'; starting = cdeModule.startCde(python, options.recovery?.lockFile ?? options.ownershipLock); }
     finally { if (previous === undefined) delete process.env.PYTHONDONTWRITEBYTECODE; else process.env.PYTHONDONTWRITEBYTECODE = previous; }
     cde = await starting;
+    // Match native startEvaluation: exclusive evaluator ownership precedes recover(), then serving.
+    if (options.recovery) { options.recovery.before(); options.recovery.after(execution.recover()); }
     const logs: RecordData[] = [];
     const app = gateway.createGatewayApp({ mode: 'evaluation', authority, authentication, adapter, execution,
       build: config.buildIdentity(kingpin.loadPolicy()), evaluateTurn: (packet: unknown) => cde!.evaluate(packet),
@@ -246,7 +258,7 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     };
     const observe: ObserveEffects = async (request, decision) => translateEffects(request.requestId,
       decision.evidence.kingpin_rc2_gateway as GatewayEvidence);
-    return { runtime, observe, close, root, http, audit, ledger, inspect, input, readExecutionReceipt,
+    return { build: config.buildIdentity(kingpin.loadPolicy()), runtime, observe, close, root, http, audit, ledger, inspect, input, readExecutionReceipt,
       // Trusted test-host transport only; credentials must never enter artifacts.
       adminConnection: { url, authorization: `Bearer ${tokens.admin}` } };
   } catch (error) { await close(); throw error; }

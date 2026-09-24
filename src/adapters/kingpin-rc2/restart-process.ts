@@ -23,7 +23,8 @@ export function startRestartChild(entry: URL, root: string, mode: 'create' | 're
     });
   };
   const rpc = (type: string, fields = {}) => { const response = wait(type); child.send({ type, ...fields }); return response; };
-  return { ready: () => wait('ready'), rpc, async close() {
+  return { ready: () => wait('ready'), rpc, wait, send: (type: string) => child.send({ type }),
+    kill: () => child.kill('SIGKILL'), exited, async close() {
     if (child.connected) child.send({ type: 'close' });
     const timer = setTimeout(() => child.kill('SIGKILL'), 10000);
     try { return await exited; } finally { clearTimeout(timer); }

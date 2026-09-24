@@ -7,7 +7,7 @@ import { runCli } from '../src/harness-cli.ts';
 test('static registry selects known runtime profiles and rejects unknown names', () => {
   for (const id of ['subprocess-reference', 'kingpin-rc2-governance', 'kingpin-rc2-gateway']) assert.equal(getRuntimeProfile(id).runtime.id, id);
   assert.throws(() => getRuntimeProfile('toString'), /Unknown runtime/);
-  assert.equal(getSuite('current').scenarios.length, 7);
+  assert.equal(getSuite('current').scenarios.length, 8);
   assert.throws(() => getSuite('other'), /Unknown suite/);
   assert.ok(getRuntimeProfile('kingpin-rc2-gateway').requirements?.['retry-after-revocation'].requires.includes('reconciliation'));
 });
@@ -19,7 +19,7 @@ test('suite skips unsupported drivers, preserves missing requirements and exits 
     'human-approval-replay': async () => { assert.fail('Unsupported driver executed'); },
   } }, getSuite('current'));
   assert.equal(called, 1); assert.equal(suiteExitCode(report), 0);
-  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 6 });
+  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 7 });
   assert.deepEqual(report.results[1].missingCapabilities, ['human-review', 'execution-accounting']);
 });
 
@@ -38,8 +38,8 @@ test('CLI JSON mode runs subprocess suite with correct statuses and summary', as
   assert.equal(code, 0); assert.equal(lines.length, 1);
   const report = JSON.parse(lines[0]);
   assert.equal(report.runtimeId, 'subprocess-reference'); assert.equal(report.suiteId, 'current');
-  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 6 });
-  assert.deepEqual(report.results.map((r: any) => r.status), ['PASS', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED']);
+  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 7 });
+  assert.deepEqual(report.results.map((r: any) => r.status), ['PASS', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED']);
 });
 
 test('invalid CLI usage and unknown selections exit nonzero', async () => {

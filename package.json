@@ -20,7 +20,8 @@
     "harness": "node src/harness-main.ts",
     "scenario:staged": "node src/adapters/kingpin-rc2/staged-main.ts",
     "scenario:restart": "node src/adapters/kingpin-rc2/restart-main.ts",
-    "scenario:review-restart": "node src/adapters/kingpin-rc2/review-restart-main.ts"
+    "scenario:review-restart": "node src/adapters/kingpin-rc2/review-restart-main.ts",
+    "scenario:unknown-restart": "node src/adapters/kingpin-rc2/unknown-restart-main.ts"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

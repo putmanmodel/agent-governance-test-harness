@@ -1,0 +1,10 @@
+import { fileURLToPath } from 'node:url';
+import { runUnknownRestart } from './unknown-restart.ts';
+import { writeJsonl } from '../../reporters/jsonl-reporter.ts';
+import { formatConsole } from '../../reporters/console-reporter.ts';
+const result = await runUnknownRestart();
+await writeJsonl(fileURLToPath(new URL('../../../artifacts/unknown-execution-survives-restart.rc2-gateway.jsonl', import.meta.url)), result.timeline);
+console.log('Real SIGKILL after the write; native startup recovery reconciles without re-execution. UNKNOWN is not retry authority.');
+console.log(formatConsole(result.timeline));
+console.log(`${result.passed ? 'PASS' : 'FAIL'}: ${result.assertions.filter(a => a.passed).length}/${result.assertions.length} invariants passed.`);
+if (!result.passed) process.exitCode = 1;

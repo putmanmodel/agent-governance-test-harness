@@ -18,14 +18,14 @@ test('external reference runtime needs no source registration and reports suppli
   assert.equal(r.code, 0);
   const report = JSON.parse(r.out[0]);
   assert.equal(report.runtimeId, 'my-runtime');
-  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 6 });
+  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 7 });
 });
 
 test('omitting capabilities yields no passed coverage and does not launch a process', async () => {
   const r = await cli([...base, '--command', '/nonexistent/should-not-launch']);
   assert.equal(r.code, 0);
   assert.equal(JSON.parse(r.out[0]).runtimeId, 'external-subprocess');
-  assert.deepEqual(JSON.parse(r.out[0]).summary, { passed: 0, failed: 0, unsupported: 7 });
+  assert.deepEqual(JSON.parse(r.out[0]).summary, { passed: 0, failed: 0, unsupported: 8 });
 });
 
 for (const flags of [[], ['--command-arg', 'x'], ['--command', 'node', '--capability', 'bogus'], ['--command', 'node', '--command', 'node'], ['--command', 'node', '--capability'], ['--command', 'node', '--runtime-id', '']]) {
