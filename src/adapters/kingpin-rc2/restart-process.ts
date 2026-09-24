@@ -1,6 +1,6 @@
 import { fork } from 'node:child_process';
-export function startRestartChild(entry: URL, root: string, mode: 'create' | 'reopen') {
-  const child = fork(entry, [root, mode], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+export function startRestartChild(entry: URL, root: string, mode: 'create' | 'reopen', args: string[] = []) {
+  const child = fork(entry, [root, mode, ...args], { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
   let diagnostic = '', failure: Error | undefined;
   const queued = new Map<string, any>(), pending = new Map<string, { resolve: (value: any) => void; reject: (error: Error) => void }>();
   const fail = (error: Error) => { failure = error; for (const p of pending.values()) p.reject(error); pending.clear(); };

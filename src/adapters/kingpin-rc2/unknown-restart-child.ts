@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { createGatewayAdapter } from './gateway.ts';
 import { crashSnapshot } from './unknown-restart-snapshot.ts';
 import { unknownRestartRequest } from '../../../scenarios/unknown-execution-survives-restart.ts';
-const [root, mode] = process.argv.slice(2);
+const [root, mode, crashCase = 'after-effect'] = process.argv.slice(2);
 function observe(data: object) {
   const fd = openSync(join(root, 'calls.jsonl'), 'a', 0o600);
   try { writeSync(fd, JSON.stringify({ source: 'harness:sandbox-call-observation', pid: process.pid, ...data }) + '\n'); fsyncSync(fd); }
@@ -13,7 +13,14 @@ let before: ReturnType<typeof crashSnapshot> | undefined, count: number | undefi
 const f = await createGatewayAdapter(unknownRestartRequest, {
   persistent: { root, create: mode === 'create' }, receiptFailure: false,
   ownershipLock: join(root, 'state.sqlite.runtime.lock'),
-  beforeEffect(request) { observe({ method: 'execute', request }); },
+  beforeEffect(request) {
+    // 'execute' observes entry into the harness wrapper, not a completed physical effect.
+    observe({ method: 'execute', request });
+    if (crashCase === 'before-effect') {
+      process.send!({ type: 'boundary', pid: process.pid, source: 'harness:before-native-execute', request });
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);
+    }
+  },
   reconciled(evidence, outcome) { observe({ method: 'reconcile', evidence, outcome }); },
   ...(mode === 'reopen' ? { recovery: { lockFile: join(root, 'state.sqlite.runtime.lock'),
     before() { before = crashSnapshot(root); }, after(n: number) { count = n; } } } : {}),

@@ -24,7 +24,8 @@ while True:
 os.close(fd)
 `, join(root, 'state.sqlite.runtime.lock'), wait ? 'wait' : 'once'], { encoding: 'utf8', timeout: 7000 }));
 }
-export async function runUnknownRestart() {
+export type CrashCase = 'before-effect' | 'after-effect';
+export async function runUnknownRestart(crashCase: CrashCase = 'after-effect') {
   const root = mkdtempSync(join(tmpdir(), 'unknown-restart-'));
   const children: ReturnType<typeof startRestartChild>[] = [];
   try {
@@ -32,10 +33,10 @@ export async function runUnknownRestart() {
       async inject() { throw new Error('No authority injection in crash recovery'); },
       async submit(request) {
         const entry = new URL('./unknown-restart-child.ts', import.meta.url), trace = ['A-spawn'];
-        children.push(startRestartChild(entry, root, 'create'));
+        children.push(startRestartChild(entry, root, 'create', [crashCase]));
         const a = await children[0].ready(); trace.push('A-ready');
         const boundaryPromise = children[0].wait('boundary'); children[0].send('execute');
-        const boundary = await boundaryPromise; trace.push('after-effect-boundary');
+        const boundary = await boundaryPromise; trace.push(`${crashCase}-boundary`);
         const atBoundary = crashSnapshot(root), ownedA = lockProbe(root, false);
         children[0].kill(); const exitA = await children[0].exited; trace.push('A-SIGKILL-exited');
         if (exitA.signal !== 'SIGKILL') throw new Error('Expected actual SIGKILL');
@@ -43,7 +44,7 @@ export async function runUnknownRestart() {
         const released = lockProbe(root, true);
         if (!released.acquired) throw new Error('CDE ownership not released after A death');
         trace.push('ownership-released', 'B-spawn');
-        children.push(startRestartChild(entry, root, 'reopen'));
+        children.push(startRestartChild(entry, root, 'reopen', [crashCase]));
         const b = await children[1].ready(); trace.push('B-native-recovery-complete');
         const ownedB = lockProbe(root, false);
         const exitB = await children[1].close(); trace.push('B-exited');
@@ -51,7 +52,7 @@ export async function runUnknownRestart() {
         if (native?.outcome !== 'allow') throw new Error('No durable native ALLOW');
         return { requestId: request.requestId, decisionId: native.decision_id, result: 'ALLOW' as const,
           rationale: 'Original durable RC2 ALLOW; recovery emits no new governance decision.',
-          evidence: { rc2_unknown_restart: { a, b, boundary, atBoundary, afterDeath, ownedA, released, ownedB, exitA, exitB, trace,
+          evidence: { rc2_unknown_restart: { crashCase, a, b, boundary, atBoundary, afterDeath, ownedA, released, ownedB, exitA, exitB, trace,
             sources: { governance: 'rc2', execution: 'rc2', recovery: 'rc2:ExecutionRuntime.recover',
               fault: 'harness:SIGKILL', calls: 'harness:sandbox-call-observation' } } } };
       },
@@ -62,4 +63,11 @@ export async function runUnknownRestart() {
         fileBefore: e.a.snapshot.file, fileAfter: e.b.snapshot.file });
     });
   } finally { try { for (const child of children) await child.close(); } finally { rmSync(root, { recursive: true, force: true }); } }
+}
+
+// One suite result requires both independent experiments; timelines are never concatenated.
+export async function runUnknownRestartFamily() {
+  const afterEffect = await runUnknownRestart('after-effect');
+  const beforeEffect = await runUnknownRestart('before-effect');
+  return { passed: afterEffect.passed && beforeEffect.passed, cases: { afterEffect, beforeEffect } };
 }

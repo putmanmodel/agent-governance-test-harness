@@ -10,6 +10,8 @@ export const unknownRestartInvariant: Invariant = timeline => {
       : 'Missing or inconsistent crash, ownership, durable execution, reconciliation or no-redispatch evidence.', evidence: record ? [record.sequence] : [] });
   try {
     const { a, b, atBoundary: at, afterDeath: dead } = e;
+    // Existing version-1 artifacts without a case label are the original after-effect experiment.
+    const crashCase = e.crashCase ?? 'after-effect', beforeEffect = crashCase === 'before-effect';
     const original = dead.ledger[0], final = b.snapshot.ledger[0];
     const matching = (x: any) => ['execution_id','request_id','decision_id','evaluation_id'].every(k => x[k] === original[k]);
     const originalEvents = dead.events.filter((x: any) => x.request_id === original.request_id);
@@ -24,11 +26,13 @@ export const unknownRestartInvariant: Invariant = timeline => {
     const passed = record?.category === 'governance' && record.data.result === 'ALLOW' && record.data.decisionId === original.decision_id
       && timeline.filter(r => r.category === 'governance').length === 1
       && a.mode === 'create' && b.mode === 'reopen' && a.pid > 0 && b.pid > 0 && a.pid !== b.pid
-      && e.boundary.pid === a.pid && e.boundary.source === 'harness:uncommitted-terminal-append'
-      && matching(e.boundary.event) && e.boundary.event.event_type === 'tool.execution.succeeded'
+      && ['before-effect','after-effect'].includes(crashCase)
+      && e.boundary.pid === a.pid
+      && (beforeEffect ? e.boundary.source === 'harness:before-native-execute' && same(e.boundary.request,callsA[0].request)
+        : e.boundary.source === 'harness:uncommitted-terminal-append' && matching(e.boundary.event) && e.boundary.event.event_type === 'tool.execution.succeeded')
       && e.exitA.pid === a.pid && e.exitA.code === null && e.exitA.signal === 'SIGKILL'
       && e.exitB.pid === b.pid && e.exitB.code === 0 && e.exitB.signal === null
-      && same(e.trace, ['A-spawn','A-ready','after-effect-boundary','A-SIGKILL-exited','durable-state-inspected','ownership-released','B-spawn','B-native-recovery-complete','B-exited'])
+      && same(e.trace, ['A-spawn','A-ready',`${crashCase}-boundary`,'A-SIGKILL-exited','durable-state-inspected','ownership-released','B-spawn','B-native-recovery-complete','B-exited'])
       && e.ownedA.acquired === false && e.released.acquired === true && e.ownedB.acquired === false
       && e.ownedA.inode === e.released.inode && e.released.inode === e.ownedB.inode
       && a.ownership === 'native-cde-exclusive-lock-acquired' && b.ownership === a.ownership
@@ -44,7 +48,10 @@ export const unknownRestartInvariant: Invariant = timeline => {
         .every((x: any) => x.evaluation_id === original.evaluation_id)
       && originalEvents.filter((x: any) => x.event_type.startsWith('tool.execution.')).length === 1
       && matching(originalEvents[indices[3]])
-      && dead.file.exists && dead.file.content === 'deterministic governance fixture\n' && same(dead.file,b.snapshot.file)
+      && (beforeEffect ? same(dead.file,{ source: 'harness', exists: false })
+        : dead.file.exists && dead.file.content === 'deterministic governance fixture\n') && same(dead.file,b.snapshot.file)
+      && (beforeEffect ? final.status === 'reconciled_failed'
+        : ['reconciled_succeeded','reconciliation_required'].includes(final.status))
       && b.recovered === 1 && b.snapshot.ledger.length === 1 && matching(final) && same(stable(original),stable(final))
       && same(b.snapshot.events.slice(0,dead.events.length),dead.events)
       && recovery.length === 2 && recovery.every(matching)
@@ -56,13 +63,14 @@ export const unknownRestartInvariant: Invariant = timeline => {
       && callsA.length === 1 && callsA[0].pid === a.pid && callsA[0].method === 'execute'
       && callsA[0].source === 'harness:sandbox-call-observation' && callsA[0].request.tool === 'fs.write'
       && callsA[0].request.plan_id === record.data.requestId
-      && callsA[0].request.args.content === dead.file.content
+      && callsA[0].request.args.content === 'deterministic governance fixture\n'
       && same(b.snapshot.calls.slice(0,callsA.length),callsA)
       && callsB.length === 1 && callsB[0].pid === b.pid && callsB[0].method === 'reconcile'
       && callsB[0].source === 'harness:sandbox-call-observation'
       && same(callsB[0].evidence,original.reconciliation_data) && original.reconciliation_data !== null
       && callsB[0].outcome === final.reconciliation.outcome
-      && original.reconciliation_data.expected_hash === createHash('sha256').update(dead.file.content).digest('hex')
+      && original.reconciliation_data.expected_hash === createHash('sha256').update(callsA[0].request.args.content).digest('hex')
+      && original.reconciliation_data.before.exists === false
       && original.reconciliation_data.root_ino === dead.sandbox.ino && original.reconciliation_data.root_dev === dead.sandbox.dev
       && original.reconciliation_data.path === callsA[0].request.args.path
       && original.agent_id === callsA[0].request.speaker_id && original.principal_id === authority.principal_id

@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runUnknownRestart } from '../../src/adapters/kingpin-rc2/unknown-restart.ts';
-test('real SIGKILL after physical write leaves STARTED and native startup reconciles without redispatch', async () => {
-  const result = await runUnknownRestart(); assert.equal(result.passed,true);
+import { runUnknownRestartFamily } from '../../src/adapters/kingpin-rc2/unknown-restart.ts';
+test('paired real SIGKILL cases reconcile present/absent effects without redispatch', async () => {
+  const family = await runUnknownRestartFamily(); assert.equal(family.passed,true);
+  const result = family.cases.afterEffect; assert.equal(result.passed,true);
   const r = result.timeline.find(r => r.category === 'governance'); assert.ok(r?.category === 'governance');
   const e = r.data.evidence.rc2_unknown_restart as any;
   assert.equal(e.exitA.signal,'SIGKILL'); assert.notEqual(e.a.pid,e.b.pid);
@@ -13,4 +14,15 @@ test('real SIGKILL after physical write leaves STARTED and native startup reconc
   assert.equal(e.b.snapshot.calls.filter((x: any) => x.method === 'execute' && x.pid === e.a.pid).length,1);
   assert.equal(e.b.snapshot.calls.filter((x: any) => x.method === 'execute' && x.pid === e.b.pid).length,0);
   assert.deepEqual(e.afterDeath.file,e.b.snapshot.file);
+  const before = family.cases.beforeEffect.timeline.find(r => r.category === 'governance');
+  assert.ok(before?.category === 'governance');
+  const x = before.data.evidence.rc2_unknown_restart as any;
+  assert.equal(x.crashCase,'before-effect'); assert.equal(x.exitA.signal,'SIGKILL');
+  assert.notEqual(x.a.pid,x.b.pid);
+  for (const pid of [x.a.pid,x.b.pid]) assert.throws(()=>process.kill(pid,0),(err: any)=>err.code==='ESRCH');
+  for (const snapshot of [x.atBoundary,x.afterDeath,x.b.before,x.b.snapshot]) assert.equal(snapshot.file.exists,false);
+  assert.equal(x.afterDeath.ledger[0].status,'started');
+  assert.equal(x.b.snapshot.ledger[0].status,'reconciled_failed');
+  assert.deepEqual(x.b.snapshot.calls.map((c: any)=>[c.pid,c.method]),[[x.a.pid,'execute'],[x.b.pid,'reconcile']]);
+  assert.equal(x.b.snapshot.calls[1].outcome,'failed');
 });
