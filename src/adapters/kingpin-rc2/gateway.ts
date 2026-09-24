@@ -64,7 +64,7 @@ export function translateEffects(requestId: string, evidence: Pick<GatewayEviden
   return { enforcement: permitted ? 'DISPATCH' : 'BLOCK', executions };
 }
 
-export async function createGatewayAdapter(original: GovernanceRequest, options: { receiptFailure?: boolean; reviewer?: boolean; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
+export async function createGatewayAdapter(original: GovernanceRequest, options: { receiptFailure?: boolean; reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
   const load = (file: string) => import(pathToFileURL(join(rc2Root, file)).href);
   const [kingpin, sqlite, gateway, sandboxModule, executionModule, authModule, cdeModule, config] = await Promise.all([
     load('kingpin/index.js'), load('kingpin/state/sqlite.js'), load('gateway_node/server.js'),
@@ -93,7 +93,11 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
   try {
     store = new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: true }) as Store;
     const authority = new kingpin.KingpinAuthority({ store });
-    const adapter = sandboxModule.createSandboxAdapter(sandbox);
+    const sandboxAdapter = sandboxModule.createSandboxAdapter(sandbox);
+    const adapter = options.beforeEffect ? { ...sandboxAdapter, execute(request: RecordData) {
+      options.beforeEffect!(request);
+      return sandboxAdapter.execute(request);
+    } } : sandboxAdapter;
     // The same transaction-failure injection used by RC2's execution.test.js.
     // The real adapter writes; SQLite rolls back only the terminal receipt, not the file.
     let faultInjected = false;
@@ -240,6 +244,8 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     };
     const observe: ObserveEffects = async (request, decision) => translateEffects(request.requestId,
       decision.evidence.kingpin_rc2_gateway as GatewayEvidence);
-    return { runtime, observe, close, root, http, audit, ledger, inspect, input, readExecutionReceipt };
+    return { runtime, observe, close, root, http, audit, ledger, inspect, input, readExecutionReceipt,
+      // Trusted test-host transport only; credentials must never enter artifacts.
+      adminConnection: { url, authorization: `Bearer ${tokens.admin}` } };
   } catch (error) { await close(); throw error; }
 }
