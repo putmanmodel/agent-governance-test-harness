@@ -1,0 +1,10 @@
+import { fileURLToPath } from 'node:url';
+import { runReviewRestart } from './review-restart.ts';
+import { writeJsonl } from '../../reporters/jsonl-reporter.ts';
+import { formatConsole } from '../../reporters/console-reporter.ts';
+const result = await runReviewRestart();
+await writeJsonl(fileURLToPath(new URL('../../../artifacts/human-approval-consumption-survives-restart.rc2-gateway.jsonl', import.meta.url)), result.timeline);
+console.log('Real approval consumption, process replacement, and direct consumed-review replay. Replay refusal is native evidence, not a new governance decision.');
+console.log(formatConsole(result.timeline));
+console.log(`${result.passed ? 'PASS' : 'FAIL'}: ${result.assertions.filter(a => a.passed).length}/${result.assertions.length} invariants passed.`);
+if (!result.passed) process.exitCode = 1;

@@ -33,14 +33,17 @@ UNSUPPORTED  Staged Write After Revocation
 UNSUPPORTED  Capability Revocation Survives Restart
              missing: execution-accounting, durable-restart
 
-1 passed; 0 failed; 5 unsupported (not passed coverage).
+UNSUPPORTED  Human Approval Consumption Survives Restart
+             missing: human-review, execution-accounting, durable-restart
+
+1 passed; 0 failed; 6 unsupported (not passed coverage).
 ```
 
 - **PASS:** the selected scenario's assertions passed.
 - **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the six scenarios above. The common CLI does not write timeline artifacts.
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the seven scenarios above. The common CLI does not write timeline artifacts.
 
 ## Run your own subprocess runtime
 
@@ -61,7 +64,7 @@ Replace the executable/path with your own process (for example `--command python
 
 Repeat `--capability` to declare supported capabilities from the documented vocabulary. Governance is implicit. `revocation` enables generic retry; without it, retry is UNSUPPORTED, never PASS. Currently this profile only supplies a generic retry driver: claiming enough capabilities to make another scenario applicable produces FAIL for its missing driver. Unknown capability names, missing commands, repeated singleton options and external-only options on built-in profiles are rejected before launch. Repeated capability names are deduplicated; repeated command arguments preserve their order.
 
-The existing protocol, five-second timeout and driver-owned cleanup apply. No real execution is added; a normal run reports 1 PASS and 5 UNSUPPORTED. See the [outside-developer example](docs/ADAPTER_AUTHORING.md#external-process-without-source-registration).
+The existing protocol, five-second timeout and driver-owned cleanup apply. No real execution is added; a normal run reports 1 PASS and 6 UNSUPPORTED. See the [outside-developer example](docs/ADAPTER_AUTHORING.md#external-process-without-source-registration).
 
 ## Runtime profiles and proof boundaries
 
@@ -69,7 +72,7 @@ The existing protocol, five-second timeout and driver-owned cleanup apply. No re
 | --- | --- | --- |
 | `subprocess-reference` | Generic Retry After Revocation | Simulated enforcement and effects |
 | `kingpin-rc2-governance` | Generic Retry After Revocation | Simulated enforcement and effects |
-| `kingpin-rc2-gateway` | All six RC2 scenario paths | Real RC2 Gateway and bounded sandbox execution |
+| `kingpin-rc2-gateway` | All seven RC2 scenario paths | Real RC2 Gateway and bounded sandbox execution |
 
 Governance-only success does **not** prove actual side-effect enforcement. UNKNOWN implies neither cancellation nor absence of effects. The reference subprocess owns its own single-authority state; it is a portability fixture, not a production policy engine.
 
@@ -106,7 +109,7 @@ The command emits one JSON suite report on stdout; diagnostics may appear on std
     "missingCapabilities": [],
     "reason": "Scenario assertions passed."
   }],
-  "summary": { "passed": 1, "failed": 0, "unsupported": 5 }
+  "summary": { "passed": 1, "failed": 0, "unsupported": 6 }
 }
 ```
 
@@ -191,4 +194,10 @@ The invariant requires native staging success, target absence throughout, correl
 
 Run `npm run scenario:restart` for `artifacts/capability-revocation-survives-restart.rc2-gateway.jsonl`. Process A completes a real bounded write, acknowledges write-capability revocation, and closes its Gateway, CDE worker and database before exiting. Only after observing A's exit does the harness start distinct Process B, which reopens the existing SQLite database (`create: false`) and sandbox. Stable principal/context and policy metadata, database/sandbox identity, preserved audit prefix and stored capability revocation prove continuity. B performs fresh CDE/Kingpin evaluation, receives denial, and leaves the complete ledger and target file unchanged. Final cleanup removes the fixture.
 
-This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 5 UNSUPPORTED.
+This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 6 UNSUPPORTED.
+
+## Human Approval Consumption Survives Restart
+
+Run `npm run scenario:review-restart` for `artifacts/human-approval-consumption-survives-restart.rc2-gateway.jsonl`. Real CDE produces HUMAN REVIEW; an authenticated reviewer approves it and the original agent consumes it once for a bounded write. Process A closes and exits before distinct Process B reopens the same database and sandbox. B directly replays `/reviews/<original-consumed-id>/execute` with the identical bound body and governed identity. RC2 returns 409; consumed review/history, execution accounting and file state remain unchanged.
+
+No fresh post-restart CDE or Kingpin decision is expected or invented. The outer timeline records the original consumption ALLOW and real execution; the initial hold/approval, process order, and later native refusal are retained in adapter evidence as one compound experiment. The invariant tests durable one-use state, not fresh-request evaluation or concurrent consumption. Existing `human-review`, `execution-accounting`, and `durable-restart` capabilities suffice. The current suite now has seven scenarios: RC2 Gateway 7 PASS; subprocess profiles with revocation only 1 PASS / 6 UNSUPPORTED.

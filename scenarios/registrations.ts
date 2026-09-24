@@ -25,4 +25,8 @@ export const restartRegistration: ScenarioRegistration = {
   id: 'capability-revocation-survives-restart', name: 'Capability Revocation Survives Restart',
   requires: ['revocation', 'execution-accounting', 'durable-restart'],
 };
-export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration] as const;
+export const reviewRestartRegistration: ScenarioRegistration = {
+  id: 'human-approval-consumption-survives-restart', name: 'Human Approval Consumption Survives Restart',
+  requires: ['human-review', 'execution-accounting', 'durable-restart'],
+};
+export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration, reviewRestartRegistration] as const;
