@@ -5,13 +5,18 @@ import { runScenario } from '../../core/runner.ts';
 import { retryAfterRevocation } from '../../../scenarios/retry-after-revocation.ts';
 
 // Exhaustive against the core union without changing the generic contract.
-const capabilities: Record<RuntimeCapability, true> = {
-  'durable-restart': true, revocation: true, 'human-review': true, 'execution-accounting': true,
-  reconciliation: true, 'multi-principal': true, 'in-flight-observation': true,
+export const capabilityDescriptions: Record<RuntimeCapability, string> = {
+  'durable-restart': 'Replace a process and reopen preserved state for a supported driver.',
+  revocation: 'Apply and acknowledge authority revocation.',
+  'human-review': 'Observe approval, consumption and replay.',
+  'execution-accounting': 'Observe native execution records.',
+  reconciliation: 'Resolve execution uncertainty from evidence.',
+  'multi-principal': 'Exercise separately authenticated identities.',
+  'in-flight-observation': 'Observe execution and control ordering while outstanding.',
 };
 export function parseCapabilities(names: readonly string[]): RuntimeCapability[] {
   for (const name of names) {
-    if (!Object.hasOwn(capabilities, name)) throw new Error(`Unknown capability: ${name}`);
+    if (!Object.hasOwn(capabilityDescriptions, name)) throw new Error(`Unknown capability: ${name}`);
   }
   return [...new Set(names)] as RuntimeCapability[];
 }

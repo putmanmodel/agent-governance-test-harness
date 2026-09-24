@@ -2,6 +2,8 @@ import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import type { GovernanceRequest, RuntimeAdapter, RuntimeDecision } from '../../core/runtime-adapter.ts';
 
+export const STDERR_DIAGNOSTIC_LIMIT = 2048;
+
 type ObjectData = Record<string, unknown>;
 function object(value: unknown): value is ObjectData {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -33,7 +35,7 @@ export class SubprocessAdapter implements RuntimeAdapter {
     this.#child.stdin.on('error', error => this.#fail(error));
     this.#child.on('exit', (code, signal) => {
       if (!this.#closing || this.#pending.size || code !== 0) {
-        this.#fail(new Error(`Subprocess exited prematurely (${code ?? signal}). ${this.#stderr}`));
+        this.#fail(new Error(`Subprocess exited prematurely (${code ?? signal}).`));
       }
     });
     this.#lines = createInterface({ input: this.#child.stdout });
@@ -52,15 +54,20 @@ export class SubprocessAdapter implements RuntimeAdapter {
 
   get stderr(): string { return this.#stderr; }
 
+  #diagnostic(error: Error): Error {
+    const excerpt = this.#stderr.slice(-STDERR_DIAGNOSTIC_LIMIT);
+    return excerpt ? new Error(`${error.message}\nSubprocess stderr (last ${STDERR_DIAGNOSTIC_LIMIT} characters):\n${excerpt}`) : error;
+  }
+
   #fail(error: Error) {
     this.#failure ??= error;
-    for (const p of this.#pending.values()) p.reject(this.#failure);
+    for (const p of this.#pending.values()) p.reject(this.#diagnostic(this.#failure));
     this.#pending.clear();
     this.#child.kill('SIGKILL');
   }
 
   async #exchange(body: ObjectData): Promise<ObjectData> {
-    if (this.#failure) throw this.#failure;
+    if (this.#failure) throw this.#diagnostic(this.#failure);
     if (this.#closing) throw new Error('Subprocess adapter is closed');
     const id = `message-${++this.#counter}`;
     return new Promise((resolve, reject) => {
@@ -79,7 +86,7 @@ export class SubprocessAdapter implements RuntimeAdapter {
     const response = await this.#exchange({ op: 'inject', type: control.type, authority_ref: control.authorityRef });
     if (response.kind !== 'ack' || response.applied !== true || response.type !== control.type
         || response.authority_ref !== control.authorityRef) {
-      const error = new Error('Invalid control acknowledgement'); this.#fail(error); throw error;
+      const error = new Error('Invalid control acknowledgement'); this.#fail(error); throw this.#diagnostic(error);
     }
     this.#controls.push(structuredClone(response));
   }
@@ -96,7 +103,7 @@ export class SubprocessAdapter implements RuntimeAdapter {
         || this.#decisions.has(response.decision_id) || this.#evaluations.has(response.evaluation_id)
         || !['allow', 'deny'].includes(String(response.outcome)) || !text(response.reason)
         || !object(response.evidence) || (response.authority_ref !== undefined && response.authority_ref !== request.authorityRef)) {
-      const error = new Error('Invalid, unsupported, stale or miscorrelated decision'); this.#fail(error); throw error;
+      const error = new Error('Invalid, unsupported, stale or miscorrelated decision'); this.#fail(error); throw this.#diagnostic(error);
     }
     this.#decisions.add(response.decision_id); this.#evaluations.add(response.evaluation_id);
     return { requestId: request.requestId, decisionId: response.decision_id,
@@ -109,6 +116,6 @@ export class SubprocessAdapter implements RuntimeAdapter {
     if (!this.#closing) { this.#closing = true; this.#child.stdin.end(); }
     const timer = setTimeout(() => this.#fail(new Error('Subprocess close timeout')), this.#timeoutMs);
     try { await this.#closed; } finally { clearTimeout(timer); this.#lines.close(); }
-    if (this.#failure) throw this.#failure;
+    if (this.#failure) throw this.#diagnostic(this.#failure);
   }
 }

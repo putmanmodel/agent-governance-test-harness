@@ -46,7 +46,24 @@ UNSUPPORTED  UNKNOWN Execution Survives Restart
 - **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the eight scenarios above. The common CLI does not write timeline artifacts.
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the eight scenarios above. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+
+## Help, discovery and failure evidence
+
+```bash
+npm run harness -- --help             # -h also works; no runtime launch
+npm run harness -- runtimes
+npm run harness -- capabilities
+npm run --silent harness -- run --runtime subprocess-reference --suite current --json --artifact-dir ./artifacts/run
+```
+
+Help/discovery exit 0 without starting a runtime. Discovery is static; capability declarations do not install scenario drivers.
+
+Suite JSON uses `reportVersion: "1"`, independent of timeline schema 1 and subprocess protocol 1. Existing identity, status, missing-capability, reason and count fields remain. Failed assertions add `diagnostics: [{invariantId, reason, case?}]`; available timelines add `artifacts: [{path, case?}]`. Native evidence stays in the timeline, not the suite report. UNKNOWN recovery still produces one scenario result, with `before-effect`/`after-effect` diagnostic labels.
+
+`--artifact-dir` creates a fresh `run-*` subdirectory under the requested directory when a timeline is available, and reports absolute file paths on both PASS and FAIL. Repeated runs do not overwrite prior artifacts. Each case gets its own JSONL file. Without the option there are no common-CLI artifact writes. Drivers without timelines and errors thrown before a result is returned have no new artifact; output/write failures remain FAIL. All current completed scenario paths support this mechanism.
+
+Human failure output includes the failed invariant and reason, optional case, and available artifact paths. Setup/protocol exceptions remain scenario FAIL with their error message; invalid CLI usage exits 1 on stderr without a suite report. Subprocess failures include at most the last 2,048 characters of captured stderr when available (including at cleanup); it is not protocol stdout and is not added to PASS reports. Treat stderr as runtime-supplied diagnostics, and keep secrets out of it and timeline evidence.
 
 ## Run your own subprocess runtime
 
@@ -79,13 +96,13 @@ The existing protocol, five-second timeout and driver-owned cleanup apply. No re
 
 Governance-only success does **not** prove actual side-effect enforcement. UNKNOWN implies neither cancellation nor absence of effects. The reference subprocess owns its own single-authority state; it is a portability fixture, not a production policy engine.
 
-Generic Retry After Revocation is currently the directly portable scenario. Human Approval Replay, Delegated Handoff and In-Flight Revocation have RC2-specific drivers and assertions. Another runtime may support these concepts, but portable drivers have not yet been generalized. Declaring capabilities does not supply those drivers. APIs are early and may change; this is not general conformance certification.
+Generic Retry After Revocation is currently the directly portable scenario. All seven other scenario families (approval replay, handoff, in-flight revocation, staged effects, durable revocation, durable approval consumption and UNKNOWN recovery) have RC2-specific drivers and assertions. Another runtime may support these concepts, but portable drivers have not yet been generalized. Declaring capabilities does not supply those drivers. APIs are early and may change; this is not general conformance certification.
 
 ## Integrate your runtime
 
 Start with the [adapter authoring guide](docs/ADAPTER_AUTHORING.md). Non-TypeScript runtimes can implement the [JSONL subprocess protocol](docs/SUBPROCESS_PROTOCOL.md), using `reference-runtime/runtime.mjs` as a standalone example.
 
-Built-in runtime profiles are registered in `src/runtime-registry.ts`. The external `subprocess` profile accepts an executable and argv without source edits; JavaScript plugin/module loading is not supported. Profiles associate capabilities and scenario drivers. Static requirements live in `scenarios/registrations.ts`; `runApplicable` checks them before fixture creation. Governance is mandatory. Optional capabilities cover revocation, human review, execution accounting, reconciliation, multiple principals and in-flight observation. Cancellation is not a prerequisite.
+Built-in runtime profiles are registered in `src/runtime-registry.ts`. The external `subprocess` profile accepts an executable and argv without source edits; JavaScript plugin/module loading is not supported. Profiles associate capabilities and scenario drivers. Static requirements live in `scenarios/registrations.ts`; `runApplicable` checks them before fixture creation. Governance is mandatory. Optional capabilities cover revocation, human review, execution accounting, reconciliation, multiple principals, durable restart and in-flight observation. Cancellation is not a prerequisite.
 
 An explicit required-capability set passed to `runApplicable` produces FAIL if unmet, rather than allowing omitted declarations to satisfy that requirement. This programmatic check is not currently exposed as a common CLI flag. Declarations are integration claims, not independent verification.
 
@@ -102,6 +119,7 @@ The command emits one JSON suite report on stdout; diagnostics may appear on std
 
 ```json
 {
+  "reportVersion": "1",
   "runtimeId": "subprocess-reference",
   "suiteId": "current",
   "results": [{
@@ -116,7 +134,7 @@ The command emits one JSON suite report on stdout; diagnostics may appear on std
 }
 ```
 
-Exit 0 may include UNSUPPORTED scenarios: CI should inspect the summary/results if specific coverage is required. Unsupported entries identify exact missing capabilities. This suite output is separate from timeline JSONL, not a new versioned public report schema.
+Exit 0 may include UNSUPPORTED scenarios: CI should inspect the summary/results if specific coverage is required. Unsupported entries identify exact missing capabilities. This suite output is separate from timeline JSONL, versioned independently with `reportVersion: "1"`.
 
 ## Developer/debugging commands
 
@@ -132,7 +150,10 @@ Existing individual commands remain available:
 | `npm run scenario:human-approval` | `human-approval-replay.rc2-gateway.jsonl` |
 | `npm run scenario:delegated-handoff` | `delegated-handoff.rc2-gateway.jsonl` |
 | `npm run scenario:in-flight` | `in-flight-revocation.rc2-gateway.jsonl` |
-| `npm run scenario:unknown-restart` | `unknown-execution-survives-restart.rc2-gateway.jsonl` |
+| `npm run scenario:staged` | `staged-write-after-revocation.rc2-gateway.jsonl` |
+| `npm run scenario:restart` | `capability-revocation-survives-restart.rc2-gateway.jsonl` |
+| `npm run scenario:review-restart` | `human-approval-consumption-survives-restart.rc2-gateway.jsonl` |
+| `npm run scenario:unknown-restart` | Both `unknown-execution-survives-restart.rc2-gateway.jsonl` and `unknown-execution-before-effect-survives-restart.rc2-gateway.jsonl` |
 
 `npm run typecheck` emits no build files; `npm test` runs the unit suite. RC2 integration testing requires the separate checkout described below. Timeline records retain `harness_schema_version: "1"`. Simulated and reference-subprocess artifacts are deterministic; RC2 artifacts retain native random IDs and timestamps. Replay means rerunning inputs, not artifact ingestion.
 
@@ -168,7 +189,7 @@ Run `npm run scenario:human-approval` for the second scenario, producing `artifa
 
 Real CDE warmup and `.` observation (from RC2's review fixture) trigger HUMAN REVIEW through `/tool/observed`. The scoped reviewer calls `/reviews/:id/approve`; the original agent calls `/reviews/:id/execute` with the identical bound body. Native review records, binding hashes, reviewer identity and consumption audit are retained. The GRANT timeline event marks the approval operation; its native receipt appears in the following governance record's evidence.
 
-Replay keeps the operation body unchanged, uses fresh harness/HTTP request IDs and links provenance to the original. `/tool/observed` produces a fresh CDE/Kingpin evaluation and new pending review, followed by an attempt to execute the **old consumed** review. RC2 returns 409. Consumption itself does not rerun CDE; a consumed-review refusal emits no new decision or denial audit, so the harness preserves the HTTP refusal without inventing either. Execution audit retains the original review's request/decision correlation. The invariant checks unchanged consumed-review history, complete ledger and file state, not merely a blocked response. All fixture state is disposable; no restart variant is tested.
+Replay keeps the operation body unchanged, uses fresh harness/HTTP request IDs and links provenance to the original. `/tool/observed` produces a fresh CDE/Kingpin evaluation and new pending review, followed by an attempt to execute the **old consumed** review. RC2 returns 409. Consumption itself does not rerun CDE; a consumed-review refusal emits no new decision or denial audit, so the harness preserves the HTTP refusal without inventing either. Execution audit retains the original review's request/decision correlation. The invariant checks unchanged consumed-review history, complete ledger and file state, not merely a blocked response. All fixture state is disposable; no restart variant is tested in this scenario.
 
 ## Delegated Handoff
 
@@ -210,7 +231,7 @@ No fresh post-restart CDE or Kingpin decision is expected or invented. The outer
 
 `npm run scenario:unknown-restart` runs both required cases of one registered scenario family, producing separate timelines:
 
-- **After effect:** `artifacts/unknown-execution-survives-restart.rc2-gateway.jsonl`. A real authenticated Gateway write crosses CDE/Kingpin authorization, commits STARTED and performs the write. The harness pauses at the uncommitted terminal-success append; the parent verifies the effect and sends SIGKILL. Native recovery records UNKNOWN then `reconciled_succeeded`.
+- **After effect:** `artifacts/unknown-execution-survives-restart.rc2-gateway.jsonl`. A real authenticated Gateway write crosses CDE/Kingpin authorization, commits STARTED and performs the write. The harness pauses at the uncommitted terminal-success append; the parent verifies the effect and sends SIGKILL. The validated native run records UNKNOWN then `reconciled_succeeded`; the after-effect invariant also accepts an honestly evidenced `reconciliation_required`, without claiming successful completion.
 - **Before effect:** `artifacts/unknown-execution-before-effect-survives-restart.rc2-gateway.jsonl`. The harness pauses inside its execute wrapper after native STARTED commits, before calling the real sandbox executor. The parent verifies the target is absent and sends SIGKILL. Native recovery records UNKNOWN then `reconciled_failed`, with the target still absent.
 
 `reconciled_failed` here means reconciliation established that the intended effect did not occur. It is not a second execution failure, a new Kingpin DENY, cancellation or revocation. The absence of a terminal receipt does not tell the runtime whether an effect happened. Recovery uses execution evidence; it does not guess and it does not retry automatically.

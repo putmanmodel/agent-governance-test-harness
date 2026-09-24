@@ -1,3 +1,4 @@
+import type { ScenarioDriverResult } from './scenario-result.ts';
 import type { RuntimeDeclaration } from './core/applicability.ts';
 import type { ScenarioRegistration } from './core/applicability.ts';
 import { rc2GatewayRuntime, rc2GovernanceRuntime } from './adapters/kingpin-rc2/capabilities.ts';
@@ -7,7 +8,7 @@ import { gatewayRetryRegistration } from '../scenarios/registrations.ts';
 export interface RuntimeProfile {
   runtime: RuntimeDeclaration;
   requirements?: Readonly<Record<string, ScenarioRegistration>>;
-  drivers: Readonly<Record<string, () => Promise<{ passed: boolean }>>>;
+  drivers: Readonly<Record<string, () => Promise<ScenarioDriverResult>>>;
 }
 
 export const runtimeProfiles: Readonly<Record<string, RuntimeProfile>> = {
@@ -41,7 +42,10 @@ export const runtimeProfiles: Readonly<Record<string, RuntimeProfile>> = {
       'retry-after-revocation': async () => (await import('./adapters/kingpin-rc2/gateway-scenario.ts')).runGatewayScenario(),
       'human-approval-replay': async () => (await import('./adapters/kingpin-rc2/review.ts')).runHumanApprovalReplay(),
       'delegated-handoff': async () => (await import('./adapters/kingpin-rc2/handoff.ts')).runDelegatedHandoff(),
-      'unknown-execution-survives-restart': async () => (await import('./adapters/kingpin-rc2/unknown-restart.ts')).runUnknownRestartFamily(),
+      'unknown-execution-survives-restart': async () => {
+        const family = await (await import('./adapters/kingpin-rc2/unknown-restart.ts')).runUnknownRestartFamily();
+        return { passed: family.passed, cases: { 'after-effect': family.cases.afterEffect, 'before-effect': family.cases.beforeEffect } };
+      },
       'human-approval-consumption-survives-restart': async () => (await import('./adapters/kingpin-rc2/review-restart.ts')).runReviewRestart(),
       'capability-revocation-survives-restart': async () => (await import('./adapters/kingpin-rc2/restart.ts')).runRestart(),
       'staged-write-after-revocation': async () => (await import('./adapters/kingpin-rc2/staged.ts')).runStagedWrite(),

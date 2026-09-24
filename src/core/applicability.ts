@@ -1,3 +1,6 @@
+import { failedAssertions } from '../scenario-result.ts';
+import type { ScenarioDriverResult, FailureDiagnostic, ArtifactReference } from '../scenario-result.ts';
+
 export type RuntimeCapability = 'revocation' | 'human-review' | 'execution-accounting'
   | 'durable-restart' | 'reconciliation' | 'multi-principal' | 'in-flight-observation';
 
@@ -17,6 +20,8 @@ export interface ApplicabilityResult {
   status: 'PASS' | 'FAIL' | 'UNSUPPORTED';
   missingCapabilities: RuntimeCapability[];
   reason: string;
+  diagnostics?: FailureDiagnostic[];
+  artifacts?: readonly ArtifactReference[];
 }
 
 // Callbacks include fixture/process creation so unsupported paths never start execution.
@@ -24,7 +29,7 @@ export interface ApplicabilityResult {
 export async function runApplicable(
   runtime: RuntimeDeclaration,
   scenario: ScenarioRegistration,
-  execute: () => Promise<{ passed: boolean }>,
+  execute: () => Promise<ScenarioDriverResult>,
   requiredCapabilities: readonly RuntimeCapability[] = [],
 ): Promise<ApplicabilityResult> {
   const missing = (required: readonly RuntimeCapability[]) => [...new Set(required)]
@@ -38,8 +43,11 @@ export async function runApplicable(
     reason: 'Runtime lacks scenario prerequisites; execution was not attempted.' };
   try {
     const result = await execute();
+    const diagnostics = result.passed ? [] : failedAssertions(result);
     return { ...base, status: result.passed ? 'PASS' : 'FAIL', missingCapabilities: [],
-      reason: result.passed ? 'Scenario assertions passed.' : 'Scenario assertions failed.' };
+      reason: result.passed ? 'Scenario assertions passed.' : 'Scenario assertions failed.',
+      ...(diagnostics.length ? { diagnostics } : {}),
+      ...(result.artifacts?.length ? { artifacts: result.artifacts } : {}) };
   } catch (error) {
     return { ...base, status: 'FAIL', missingCapabilities: [],
       reason: error instanceof Error ? error.message : String(error) };

@@ -4,7 +4,7 @@
 
 ## Framing and lifecycle
 
-Send one JSON object per newline-terminated stdin line; return one JSON object per stdout line. Flush responses promptly. Reserve stdout for protocol responses; logs belong on stderr. The adapter captures the last 8192 characters of stderr separately (`adapter.stderr`), not in timeline evidence by default. Normal shutdown closes stdin; the child must exit cleanly with code 0. The driver must await `adapter.close()` in `finally`.
+Send one JSON object per newline-terminated stdin line; return one JSON object per stdout line. Flush responses promptly. Reserve stdout for protocol responses; logs belong on stderr. The adapter captures the last 8192 characters of stderr separately (`adapter.stderr`), not in timeline evidence by default. Failure diagnostics surface at most its last 2,048 characters when available; `close()` includes diagnostics captured through process closure. This excerpt is not included in PASS suite results and never enters protocol parsing. Normal shutdown closes stdin; the child must exit cleanly with code 0. The driver must await `adapter.close()` in `finally`.
 
 The constructor is `new SubprocessAdapter(command, args, timeoutMs = 5000)`. Each response and normal shutdown have a five-second default timeout. Malformed JSON, invalid envelopes, unknown kinds/outcomes, mismatches, duplicate/unsolicited responses and invalid payloads fail explicitly, reject pending work and terminate the child with SIGKILL. Timeouts do likewise. A process exit before requested shutdown, a nonzero exit, or an exit with pending requests is an error. Spawn/write errors also fail. `close()` rethrows a recorded failure; protocol errors never become INDETERMINATE. There is no structured error-response kind: a bridge should emit diagnostics on stderr and fail, rather than invent a governance decision.
 
@@ -82,4 +82,4 @@ The adapter retains the native response and accumulated acknowledged controls in
 
 This protocol provides governance only. The existing runner simulates UNKNOWN for the initial execution and blocking for the denied retry. A passing scenario does not prove real side-effect enforcement or containment.
 
-Wire `protocol_version: "1"` is independent of timeline `harness_schema_version: "1"`. Suite JSON reports are a third, separate output shape. No new report/version negotiation is implied.
+Wire `protocol_version: "1"` is independent of timeline `harness_schema_version: "1"`. Suite JSON reports independently carry `reportVersion: "1"`. No protocol negotiation is implied; the wire protocol is unchanged.
