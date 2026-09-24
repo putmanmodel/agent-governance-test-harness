@@ -1,26 +1,118 @@
 # Agent Governance Test Harness
 
-A small TypeScript harness for scenario orchestration, condition injection, observations, timeline capture, assertions and reporting. Requires Node 24+. Zero runtime dependencies; TypeScript and Node declarations are development dependencies.
+A small, framework-neutral TypeScript harness for testing whether governance boundaries survive retries, revoked authority, approval replay and task handoff. The harness orchestrates conditions, captures observations and evaluates invariants; the runtime under test owns authority decisions and enforcement.
 
-CDE owns governance signals; Kingpin owns authority; Gateway owns mechanical enforcement; RC2 execution machinery owns effects, receipts and reconciliation. Harness assertions test observed behavior without reproducing authority policy. No UI, LLM or agent framework.
+CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
 
-Run `npm ci`, `npm run typecheck`, and `npm test`. Static checking emits no build files. The commands below run **Retry After Revocation** and print an ordered timeline and PASS/FAIL summary; failed invariants set a nonzero exit code.
+## Quick start
 
-| Command | Real components | Artifact under `artifacts/` |
+```bash
+npm ci
+npm run typecheck
+npm test
+npm run harness -- run --runtime subprocess-reference --suite current
+```
+
+Expected suite output:
+
+```text
+Runtime: subprocess-reference
+Suite: current
+
+PASS         Retry After Revocation
+UNSUPPORTED  Human Approval Replay
+             missing: human-review, execution-accounting
+UNSUPPORTED  Delegated Handoff
+             missing: multi-principal, execution-accounting
+UNSUPPORTED  In-Flight Revocation
+             missing: execution-accounting, in-flight-observation
+
+1 passed; 0 failed; 3 unsupported (not passed coverage).
+```
+
+- **PASS:** the selected scenario's assertions passed.
+- **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
+- **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
+
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the four scenarios above. The common CLI does not write timeline artifacts.
+
+## Runtime profiles and proof boundaries
+
+| Static profile | Current suite coverage | Execution |
 | --- | --- | --- |
-| `npm run scenario` | None; deterministic fixture | `retry-after-revocation.jsonl` |
-| `npm run scenario:rc2` | CDE and Kingpin | `retry-after-revocation.rc2.jsonl` |
-| `npm run scenario:rc2-gateway` | CDE, Kingpin, HTTP Gateway, execution and reconciliation | `retry-after-revocation.rc2-gateway.jsonl` |
+| `subprocess-reference` | Generic Retry After Revocation | Simulated enforcement and effects |
+| `kingpin-rc2-governance` | Generic Retry After Revocation | Simulated enforcement and effects |
+| `kingpin-rc2-gateway` | All four RC2 scenario paths | Real RC2 Gateway and bounded sandbox execution |
 
-Every timeline record uses `harness_schema_version: "1"`. The simulated artifact remains byte-identical across fresh runs. Connected artifacts retain native random IDs and timestamps and are not byte-identical. Replay means rerunning inputs; artifact ingestion is not implemented.
+Governance-only success does **not** prove actual side-effect enforcement. UNKNOWN implies neither cancellation nor absence of effects. The reference subprocess owns its own single-authority state; it is a portability fixture, not a production policy engine.
+
+Generic Retry After Revocation is currently the directly portable scenario. Human Approval Replay, Delegated Handoff and In-Flight Revocation have RC2-specific drivers and assertions. Another runtime may support these concepts, but portable drivers have not yet been generalized. Declaring capabilities does not supply those drivers. APIs are early and may change; this is not general conformance certification.
+
+## Integrate your runtime
+
+Start with the [adapter authoring guide](docs/ADAPTER_AUTHORING.md). Non-TypeScript runtimes can implement the [JSONL subprocess protocol](docs/SUBPROCESS_PROTOCOL.md), using `reference-runtime/runtime.mjs` as a standalone example.
+
+Runtime profiles are registered in source in `src/runtime-registry.ts`; the CLI does not load arbitrary executables or modules. Profiles associate capabilities and scenario drivers. Static requirements live in `scenarios/registrations.ts`; `runApplicable` checks them before fixture creation. Governance is mandatory. Optional capabilities cover revocation, human review, execution accounting, reconciliation, multiple principals and in-flight observation. Cancellation is not a prerequisite.
+
+An explicit required-capability set passed to `runApplicable` produces FAIL if unmet, rather than allowing omitted declarations to satisfy that requirement. This programmatic check is not currently exposed as a common CLI flag. Declarations are integration claims, not independent verification.
+
+## CI output
+
+```bash
+npm run --silent harness -- run \
+  --runtime subprocess-reference \
+  --suite current \
+  --json
+```
+
+The command emits one JSON suite report on stdout; diagnostics may appear on stderr. Abbreviated example (only the first scenario entry shown):
+
+```json
+{
+  "runtimeId": "subprocess-reference",
+  "suiteId": "current",
+  "results": [{
+    "runtimeId": "subprocess-reference",
+    "scenarioId": "retry-after-revocation",
+    "scenarioName": "Retry After Revocation",
+    "status": "PASS",
+    "missingCapabilities": [],
+    "reason": "Scenario assertions passed."
+  }],
+  "summary": { "passed": 1, "failed": 0, "unsupported": 3 }
+}
+```
+
+Exit 0 may include UNSUPPORTED scenarios: CI should inspect the summary/results if specific coverage is required. Unsupported entries identify exact missing capabilities. This suite output is separate from timeline JSONL, not a new versioned public report schema.
+
+## Developer/debugging commands
+
+Existing individual commands remain available:
+
+| Command | Path / artifact under `artifacts/` |
+| --- | --- |
+| `npm run scenario` | Deterministic simulation: `retry-after-revocation.jsonl` |
+| `npm run scenario:subprocess` | Independent governance: `retry-after-revocation.subprocess.jsonl` |
+| `npm run suite:subprocess` | Applicability demonstration; no artifact |
+| `npm run scenario:rc2` | RC2 governance: `retry-after-revocation.rc2.jsonl` |
+| `npm run scenario:rc2-gateway` | RC2 execution: `retry-after-revocation.rc2-gateway.jsonl` |
+| `npm run scenario:human-approval` | `human-approval-replay.rc2-gateway.jsonl` |
+| `npm run scenario:delegated-handoff` | `delegated-handoff.rc2-gateway.jsonl` |
+| `npm run scenario:in-flight` | `in-flight-revocation.rc2-gateway.jsonl` |
+
+`npm run typecheck` emits no build files; `npm test` runs the unit suite. RC2 integration testing requires the separate checkout described below. Timeline records retain `harness_schema_version: "1"`. Simulated and reference-subprocess artifacts are deterministic; RC2 artifacts retain native random IDs and timestamps. Replay means rerunning inputs, not artifact ingestion.
+
+## RC2 integration details
+
+CDE owns governance signals; Kingpin owns authority; Gateway owns mechanical enforcement; RC2 execution machinery owns effects, receipts and reconciliation. The harness does not reproduce Kingpin policy.
 
 ## RC2 connection
 
-Run `npm run test:integration` for both connected paths. `RC2_ROOT` defaults to sibling `agent-tool-governance-gateway`. `CDE_PYTHON` overrides its `.venv-task/bin/python` (otherwise `python3`). That checkout needs its existing Node/Python dependencies. Missing dependencies fail explicitly. No RC2 files or policy are modified. Verified against commit `0a5d2c26cabea3634a9a7c9e2bff67de6982ef46`.
+Run `npm run test:integration` for the connected RC2 scenarios. `RC2_ROOT` defaults to sibling `agent-tool-governance-gateway`. `CDE_PYTHON` overrides its `.venv-task/bin/python` (otherwise `python3`). That checkout needs its existing Node/Python dependencies. Missing dependencies fail explicitly. No RC2 files or policy are modified. Verified against commit `0a5d2c26cabea3634a9a7c9e2bff67de6982ef46`.
 
 Governance-only mode imports `kingpin/index.js` and batches real CDE observations through `conformance/cde_bridge.py`. Action X maps to `fs.delete`, but enforcement and all execution, including UNKNOWN, remain simulated. Authority resolves to an issued lease; nonce revocation requires both acknowledgement and native `nonce_revoked` validation.
 
-Both adapters retain native decisions and evidence. Normalization is `allow` → ALLOW, `deny`/`quarantine` → DENY, `constrain`/`human_review` → INDETERMINATE. Unsupported outcomes throw. Historical provenance is evidence, never authority.
+The RC2 adapters retain native decisions and evidence. Normalization is `allow` → ALLOW, `deny`/`quarantine` → DENY, `constrain`/`human_review` → INDETERMINATE. Unsupported outcomes throw. Historical provenance is evidence, never authority.
 
 ## Real Gateway and execution
 
@@ -57,29 +149,3 @@ Run `npm run scenario:in-flight` for `artifacts/in-flight-revocation.rc2-gateway
 Observed RC2 behavior: the synchronous adapter holds a SQLite writer transaction, and Gateway serializes requests. Revocation remained pending while the worker was blocked; native audit orders execution success before capability revocation. RC2 exposes no cancellation API here (`cancellation_supported: false`). The invariant preserves the native disposition (including FAILED or UNKNOWN when reported), then requires fresh governance and unchanged accounting/file state for later denied dispatch. It does not demand cancellation or success. Current serial-RC2 ordering is explicit; a change to concurrent acknowledgement would require reviewing this experiment's ordering checks.
 
 Interleaving lives in adapter evidence: parent monotonic observation order records request transmission, pending acknowledgement and barrier release; native SQLite audit sequence establishes commit order. Client response arrival is not treated as execution completion time. Outer timeline timestamps remain scenario logical times. Native receipts are retrieved through the shared hardened helper. No generic scheduler or schema change is introduced.
-
-## Portable subprocess runtime
-
-The Agent Governance Test Harness is not specific to CDE/Kingpin. CDE/Kingpin is one supported runtime adapter. The subprocess adapter provides a second boundary; runtimes must implement its protocol or supply their own adapter, rather than being supported automatically.
-
-Run `npm run scenario:subprocess` for the unchanged Retry After Revocation scenario against `reference-runtime/runtime.mjs`, an independent JavaScript process with no dependencies. It owns a single authority flag and evaluates its current value on every submission. The adapter owns transport, correlation and normalization. Enforcement and execution (including UNKNOWN) remain simulated: this proves portable governance testing, not real enforcement or side-effect containment. The artifact is `artifacts/retry-after-revocation.subprocess.jsonl`.
-
-Protocol: one JSON object per line on stdin/stdout, with `protocol_version: "1"` and a correlated `id`. `op: "inject"` carries `type: "GRANT" | "REVOKE"` and `authority_ref`; the response is `kind: "ack"`, `applied: true`, with the same type/reference, only after application. `op: "submit"` carries `request` with `request_id`, `principal_id`, `agent_id`, `action`, `target`, optional `authority_ref`/`lease_ref`, `provenance: {scenario_id, retry_of?}`, and `context`. Its `kind: "decision"` response carries `request_id`, fresh `decision_id` and `evaluation_id`, `outcome`, `reason`, an `evidence` object and optional `authority_ref`. Native `allow`/`deny` map to ALLOW/DENY; native responses and control acknowledgements remain in opaque evidence. Protocol version 1 is independent of artifact schema version 1.
-
-Diagnostics belong on stderr. Malformed JSON, unknown response kinds/outcomes, mismatched IDs, unapplied controls, reused decision/evaluation IDs, timeouts and premature exits fail explicitly. EOF on stdin requests clean shutdown. The reference process performs no tool effects; its authority behavior is a portability fixture, not a production policy engine.
-
-## Capability applicability
-
-Run `npm run suite:subprocess`: Retry After Revocation reports PASS; Human Approval Replay, Delegated Handoff and In-Flight Revocation report UNSUPPORTED with their missing prerequisites. The summary counts unsupported coverage separately. Unsupported means the configured adapter lacks a scenario prerequisite, not that its governance failed.
-
-Static runtime declarations live in each adapter's `capabilities.ts`; scenario requirements live in `scenarios/registrations.ts`. Governance is mandatory. Optional capabilities are revocation, human review, execution accounting, reconciliation, multiple principals and in-flight observation. RC2's governance-only path declares revocation; its Gateway scenario drivers collectively support all six. The subprocess reference declares only revocation. Its declaration does not apply automatically to arbitrary subprocesses. The Gateway retry registration additionally requires accounting and reconciliation; handoff requires revocation for its current fixture setup. Cancellation is not required.
-
-`runApplicable` checks prerequisites before invoking the execution callback (including process/fixture setup). PASS requires passing assertions; assertion failures and supported-path exceptions become FAIL, never UNSUPPORTED. Callers may pass an explicit required-capability set: any missing member produces FAIL before execution, preventing omitted flags from satisfying that requirement. Declarations are integration claims, not independent certification. The demonstration exits nonzero for FAIL and explicitly reports unsupported coverage even when no failures occur. Existing individual scenario commands continue to run their selected paths directly. Applicability results live outside timeline records; artifact schema remains 1. No discovery or negotiation is performed.
-
-## Running the harness
-
-Use `npm run harness -- run --runtime subprocess-reference --suite current` for the common entry point. Add `--json` for a single structured suite report on stdout (runtime/suite IDs, scenario results with missing capabilities and reasons, and summary counts). Native diagnostics may appear on stderr. This report is separate from timeline JSONL; the suite command does not write timeline artifacts.
-
-Built-in profiles are `subprocess-reference`, `kingpin-rc2-governance`, and `kingpin-rc2-gateway`. The `current` suite contains Retry After Revocation, Human Approval Replay, Delegated Handoff and In-Flight Revocation. The first two profiles run governance-only retry with simulated enforcement/execution and report the remaining scenarios UNSUPPORTED. The Gateway profile runs all four real RC2 paths, including retry's accounting/reconciliation prerequisites. Profiles and drivers are statically registered; no arbitrary modules are loaded from arguments.
-
-PASS means the selected scenario's assertions passed; FAIL includes assertion, setup, protocol and execution errors; UNSUPPORTED means prerequisites are missing and no driver ran. Exit 0 means no FAIL results, even with unsupported coverage. Failures, invalid usage and unknown runtime/suite names exit nonzero. Unsupported coverage is never counted as passed. Existing individual scenario commands and `suite:subprocess` remain available as developer/debugging entry points.
