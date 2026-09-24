@@ -11,7 +11,8 @@
     "scenario": "node src/main.ts",
     "scenario:rc2": "node src/main.ts --rc2",
     "scenario:rc2-gateway": "node src/main.ts --rc2-gateway",
-    "test:integration": "node --test tests/integration/*.test.ts"
+    "test:integration": "node --test tests/integration/*.test.ts",
+    "scenario:human-approval": "node src/adapters/kingpin-rc2/review-main.ts"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

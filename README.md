@@ -4,7 +4,7 @@ A small TypeScript harness for scenario orchestration, condition injection, obse
 
 CDE owns governance signals; Kingpin owns authority; Gateway owns mechanical enforcement; RC2 execution machinery owns effects, receipts and reconciliation. Harness assertions test observed behavior without reproducing authority policy. No UI, LLM or agent framework.
 
-Run `npm ci`, `npm run typecheck`, and `npm test`. Static checking emits no build files. All modes run **Retry After Revocation** and print an ordered timeline and PASS/FAIL summary; failed invariants set a nonzero exit code.
+Run `npm ci`, `npm run typecheck`, and `npm test`. Static checking emits no build files. The commands below run **Retry After Revocation** and print an ordered timeline and PASS/FAIL summary; failed invariants set a nonzero exit code.
 
 | Command | Real components | Artifact under `artifacts/` |
 | --- | --- | --- |
@@ -35,3 +35,11 @@ Default RC2 policy permits `fs.write` with evidence rather than requiring a leas
 `GET /audit/:request_id` supplies enforcement/start/UNKNOWN/reconciliation events. A read-only store transaction captures the complete execution ledger (the HTTP list endpoint lists only unresolved executions). The assertion requires exactly one execution, unchanged ledger across denied redispatch, no retry execution events, and unchanged file content/inode/size/timestamps. DENY alone is insufficient. Sources distinguish `harness`, `rc2:cde`, `rc2:kingpin`, `rc2:gateway` and `rc2:execution`; only the fault is harness-injected. No UNKNOWN state is simulated in this mode.
 
 The runner's optional framework-neutral observation callback replaces its default simulated enforcement/execution. Generic event contracts and schema version remain unchanged; richer native records stay in adapter evidence. Native reconciliation success maps to generic SUCCEEDED while preserving its full native status and execution ID.
+
+## Human Approval Replay
+
+Run `npm run scenario:human-approval` for the second scenario, producing `artifacts/human-approval-replay.rc2-gateway.jsonl`. Its `human_approval_not_reusable` invariant requires a real review hold, authenticated reviewer approval, one consumed approval and one successful sandbox write, then no second execution after replay. Receipt-failure injection is disabled for this scenario.
+
+Real CDE warmup and `.` observation (from RC2's review fixture) trigger HUMAN REVIEW through `/tool/observed`. The scoped reviewer calls `/reviews/:id/approve`; the original agent calls `/reviews/:id/execute` with the identical bound body. Native review records, binding hashes, reviewer identity and consumption audit are retained. The GRANT timeline event marks the approval operation; its native receipt appears in the following governance record's evidence.
+
+Replay keeps the operation body unchanged, uses fresh harness/HTTP request IDs and links provenance to the original. `/tool/observed` produces a fresh CDE/Kingpin evaluation and new pending review, followed by an attempt to execute the **old consumed** review. RC2 returns 409. Consumption itself does not rerun CDE; a consumed-review refusal emits no new decision or denial audit, so the harness preserves the HTTP refusal without inventing either. Execution audit retains the original review's request/decision correlation. The invariant checks unchanged consumed-review history, complete ledger and file state, not merely a blocked response. All fixture state is disposable; no restart variant is tested.

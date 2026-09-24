@@ -64,7 +64,7 @@ export function translateEffects(requestId: string, evidence: GatewayEvidence): 
   return { enforcement: permitted ? 'DISPATCH' : 'BLOCK', executions };
 }
 
-export async function createGatewayAdapter(original: GovernanceRequest) {
+export async function createGatewayAdapter(original: GovernanceRequest, options: { receiptFailure?: boolean; reviewer?: boolean } = {}) {
   const load = (file: string) => import(pathToFileURL(join(rc2Root, file)).href);
   const [kingpin, sqlite, gateway, sandboxModule, executionModule, authModule, cdeModule, config] = await Promise.all([
     load('kingpin/index.js'), load('kingpin/state/sqlite.js'), load('gateway_node/server.js'),
@@ -102,7 +102,7 @@ export async function createGatewayAdapter(original: GovernanceRequest) {
         const append = tx.audit.append;
         tx.audit.append = event => {
           const result = append(event);
-          if (!faultInjected && event.event_type === 'tool.execution.succeeded') {
+          if (options.receiptFailure !== false && !faultInjected && event.event_type === 'tool.execution.succeeded') {
             faultInjected = true;
             throw new Error('Harness-injected terminal receipt transaction failure');
           }
@@ -112,11 +112,12 @@ export async function createGatewayAdapter(original: GovernanceRequest) {
       });
     } };
     const execution = new executionModule.ExecutionRuntime({ store: executionStore, adapter });
-    const tokens = { agent: randomBytes(32).toString('base64url'), admin: randomBytes(32).toString('base64url') };
+    const tokens = { agent: randomBytes(32).toString('base64url'), admin: randomBytes(32).toString('base64url'), reviewer: randomBytes(32).toString('base64url') };
     const context = { session_id: original.provenance.scenarioId, channel_id: 'channel', scene_id: 'scene', task_id: null };
     const authentication = authModule.createAuthentication({ schema_version: '1.0', principals: [
       { token: tokens.agent, principal_id: original.principal, role: 'agent', agent_id: original.agent, allowed_contexts: [context] },
       { token: tokens.admin, principal_id: 'harness-admin', role: 'authority_admin' },
+      ...(options.reviewer ? [{ token: tokens.reviewer, principal_id: 'harness-reviewer', role: 'reviewer', allowed_contexts: [context] }] : []),
     ] });
     const python = process.env.CDE_PYTHON ?? (existsSync(join(rc2Root, '.venv-task/bin/python')) ? join(rc2Root, '.venv-task/bin/python') : 'python3');
     // startCde spawns synchronously before awaiting readiness; prevent source-tree pycache writes.
@@ -136,12 +137,12 @@ export async function createGatewayAdapter(original: GovernanceRequest) {
     const address = server!.address();
     if (!address || typeof address === 'string') throw new Error('Gateway listener unavailable');
     const url = `http://127.0.0.1:${address.port}`;
-    async function http(path: string, body?: RecordData, role: 'agent' | 'admin' = 'agent') {
+    async function http(path: string, body?: RecordData, role: 'agent' | 'admin' | 'reviewer' = 'agent') {
       const response = await fetch(url + path, { method: body ? 'POST' : 'GET',
         headers: { authorization: `Bearer ${tokens[role]}`, 'content-type': 'application/json' },
         ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20_000) });
       return { status: response.status, body: await response.json() as RecordData,
-        requestId: response.headers.get('x-request-id')! };
+        requestId: response.headers.get('x-request-id')!, reviewId: response.headers.get('x-review-id') };
     }
     const input = (request: GovernanceRequest) => {
       if (request.proposedAction !== 'action-x' || request.target !== 'target-x'
@@ -232,6 +233,6 @@ export async function createGatewayAdapter(original: GovernanceRequest) {
     };
     const observe: ObserveEffects = async (request, decision) => translateEffects(request.requestId,
       decision.evidence.kingpin_rc2_gateway as GatewayEvidence);
-    return { runtime, observe, close, root };
+    return { runtime, observe, close, root, http, audit, ledger, inspect, input };
   } catch (error) { await close(); throw error; }
 }
