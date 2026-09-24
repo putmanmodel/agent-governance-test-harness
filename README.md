@@ -36,6 +36,27 @@ UNSUPPORTED  In-Flight Revocation
 
 Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the four scenarios above. The common CLI does not write timeline artifacts.
 
+## Run your own subprocess runtime
+
+A developer can implement the documented subprocess protocol, point the harness CLI at their executable, and run applicable governance scenarios without modifying the harness source code.
+
+```bash
+npm run harness -- run \
+  --runtime subprocess \
+  --command node \
+  --command-arg ./reference-runtime/runtime.mjs \
+  --capability revocation \
+  --suite current
+```
+
+Replace the executable/path with your own process (for example `--command python3 --command-arg ./my-runtime.py`). `subprocess-reference` is the fixed built-in example; `subprocess` is externally configured. Its default report identity is `external-subprocess`; optionally set `--runtime-id my-governance-layer`. Add `--json` for CI, using `npm run --silent harness` to suppress npm's banner.
+
+`--command` is one executable, not a shell command string. Repeat `--command-arg` for each argument; use `--command-arg=-u` for arguments beginning with a dash. Arguments retain spaces and metacharacters literally. Relative paths use the invoking working directory. This is user-supplied local code executed with the invoking user's privileges, not a security sandbox.
+
+Repeat `--capability` to declare supported capabilities from the documented vocabulary. Governance is implicit. `revocation` enables generic retry; without it, retry is UNSUPPORTED, never PASS. Currently this profile only supplies a generic retry driver: claiming enough capabilities to make another scenario applicable produces FAIL for its missing driver. Unknown capability names, missing commands, repeated singleton options and external-only options on built-in profiles are rejected before launch. Repeated capability names are deduplicated; repeated command arguments preserve their order.
+
+The existing protocol, five-second timeout and driver-owned cleanup apply. No real execution is added; a normal run reports 1 PASS and 3 UNSUPPORTED. See the [outside-developer example](docs/ADAPTER_AUTHORING.md#external-process-without-source-registration).
+
 ## Runtime profiles and proof boundaries
 
 | Static profile | Current suite coverage | Execution |
@@ -52,7 +73,7 @@ Generic Retry After Revocation is currently the directly portable scenario. Huma
 
 Start with the [adapter authoring guide](docs/ADAPTER_AUTHORING.md). Non-TypeScript runtimes can implement the [JSONL subprocess protocol](docs/SUBPROCESS_PROTOCOL.md), using `reference-runtime/runtime.mjs` as a standalone example.
 
-Runtime profiles are registered in source in `src/runtime-registry.ts`; the CLI does not load arbitrary executables or modules. Profiles associate capabilities and scenario drivers. Static requirements live in `scenarios/registrations.ts`; `runApplicable` checks them before fixture creation. Governance is mandatory. Optional capabilities cover revocation, human review, execution accounting, reconciliation, multiple principals and in-flight observation. Cancellation is not a prerequisite.
+Built-in runtime profiles are registered in `src/runtime-registry.ts`. The external `subprocess` profile accepts an executable and argv without source edits; JavaScript plugin/module loading is not supported. Profiles associate capabilities and scenario drivers. Static requirements live in `scenarios/registrations.ts`; `runApplicable` checks them before fixture creation. Governance is mandatory. Optional capabilities cover revocation, human review, execution accounting, reconciliation, multiple principals and in-flight observation. Cancellation is not a prerequisite.
 
 An explicit required-capability set passed to `runApplicable` produces FAIL if unmet, rather than allowing omitted declarations to satisfy that requirement. This programmatic check is not currently exposed as a common CLI flag. Declarations are integration claims, not independent verification.
 

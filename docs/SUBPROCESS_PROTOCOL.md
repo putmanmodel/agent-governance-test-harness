@@ -1,6 +1,6 @@
 # Subprocess protocol version 1
 
-[`SubprocessAdapter`](../src/adapters/subprocess/adapter.ts) launches a command with an argument array, without a shell, and translates this protocol into generic harness types. [`reference-runtime/runtime.mjs`](../reference-runtime/runtime.mjs) is a standalone JavaScript implementation. A Python, Go or other runtime can implement the same boundary. The common CLI currently requires source registration of a profile; it does not accept arbitrary process paths.
+[`SubprocessAdapter`](../src/adapters/subprocess/adapter.ts) launches a command with an argument array, without a shell, and translates this protocol into generic harness types. [`reference-runtime/runtime.mjs`](../reference-runtime/runtime.mjs) is a standalone JavaScript implementation. A Python, Go or other runtime can implement the same boundary. Use `--runtime subprocess --command <executable>` with repeatable `--command-arg` and `--capability` options to connect without source registration. The fixed `subprocess-reference` profile remains available. Commands execute as local code with the invoking user's privileges, without shell interpolation.
 
 ## Framing and lifecycle
 

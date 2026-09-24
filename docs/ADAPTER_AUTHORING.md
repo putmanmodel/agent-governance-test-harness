@@ -56,7 +56,7 @@ Add a profile to [`src/runtime-registry.ts`](../src/runtime-registry.ts), associ
 },
 ```
 
-Then use `npm run harness -- run --runtime my-runtime --suite current`. Source registration is currently required and expected to improve later; no dynamic loading is available. A driver returns at least `{passed: boolean}`. Fixture construction belongs inside the driver so unsupported scenarios do not start resources. Profile-specific `requirements` can select an existing registration variant, as Gateway retry does for reconciliation/accounting. Do not weaken prerequisites to claim support.
+Then use `npm run harness -- run --runtime my-runtime --suite current`. Source registration is required for a custom TypeScript/common-CLI profile. Protocol-compatible external processes can instead use `--runtime subprocess` without source edits, as below. Dynamic JavaScript loading is not supported. A driver returns at least `{passed: boolean}`. Fixture construction belongs inside the driver so unsupported scenarios do not start resources. Profile-specific `requirements` can select an existing registration variant, as Gateway retry does for reconciliation/accounting. Do not weaken prerequisites to claim support.
 
 ## Capabilities and applicability
 
@@ -76,3 +76,48 @@ Declarations live beside adapters; requirements live in [`scenarios/registration
 `runApplicable` checks prerequisites before execution: missing prerequisites give UNSUPPORTED; assertion failures and supported-path exceptions give FAIL. Unsupported coverage is not passed coverage. Its optional explicit caller-required set produces FAIL when missing; the suite/CLI currently does not expose this argument. A supported registration with no driver fails. See [applicability](../src/core/applicability.ts) and [suite runner](../src/suite-runner.ts).
 
 These interfaces are early. The mandatory control method, separate observation callback and driver-owned cleanup are current conventions, not a finalized SDK.
+
+## External process without source registration
+
+For a minimal standalone process, save this as `my-runtime.py` outside the harness. It is a single-authority example, not production policy; replace its authority behavior with calls to your runtime. It emits no tool effects.
+
+```python
+import json
+import sys
+
+active = False
+evaluation = 0
+for line in sys.stdin:
+    message = json.loads(line)
+    if message["protocol_version"] != "1":
+        raise ValueError("unsupported protocol")
+    response = {"protocol_version": "1", "id": message["id"]}
+    if message["op"] == "inject":
+        if message["authority_ref"] != "authority-1" or message["type"] not in ("GRANT", "REVOKE"):
+            raise ValueError("unknown control")
+        active = message["type"] == "GRANT"
+        response.update(kind="ack", applied=True, type=message["type"], authority_ref="authority-1")
+    elif message["op"] == "submit":
+        request = message["request"]
+        evaluation += 1
+        allowed = active and request.get("authority_ref") == "authority-1"
+        response.update(kind="decision", request_id=request["request_id"],
+                        decision_id=f"decision-{evaluation}", evaluation_id=f"evaluation-{evaluation}",
+                        outcome="allow" if allowed else "deny", reason="Current authority evaluated",
+                        evidence={"authority_valid": active})
+    else:
+        raise ValueError("unknown operation")
+    print(json.dumps(response), flush=True)
+```
+
+From the harness directory:
+
+```bash
+npm run harness -- run --runtime subprocess \
+  --command python3 --command-arg /absolute/path/to/my-runtime.py \
+  --capability revocation --runtime-id my-governance-layer --suite current
+```
+
+No source registration is needed. Use repeated `--command-arg` entries for argv (dash-prefixed values use `--command-arg=-u`), not a quoted shell command. Local code executes with your privileges. Omit `--runtime-id` for `external-subprocess`; stderr remains separate from JSONL stdout. `--json` uses the existing suite report format.
+
+All six existing capability names are recognized, but only generic retry has a subprocess driver. Declarations do not implement new drivers: an applicable scenario without a driver fails. With only `revocation`, expect 1 PASS / 3 UNSUPPORTED. Without capabilities, expect 0 PASS / 4 UNSUPPORTED and no process launch. Unknown capabilities/options fail early. The driver closes the process in `finally` on success and failure; CLI usage validation finishes before driver creation.
