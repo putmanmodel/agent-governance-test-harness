@@ -1,0 +1,36 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { runDelegatedHandoff } from '../../src/adapters/kingpin-rc2/handoff.ts';
+import { delegatedHandoffInvariant, type HandoffEvidence } from '../../src/adapters/kingpin-rc2/handoff-assertion.ts';
+
+test('real A control execution and B-authenticated handoff cross separate governance boundaries', async () => {
+  const result = await runDelegatedHandoff();
+  assert.equal(result.passed, true, result.assertions[0].reason);
+  const decisions = result.timeline.filter(r => r.category === 'governance');
+  const [a, b] = decisions.map(r => r.data.evidence.rc2_handoff as HandoffEvidence);
+  const nativeA = a.audit.find(e => e.event_type === 'authority.decision')!;
+  const nativeB = b.audit.find(e => e.event_type === 'authority.decision')!;
+  assert.equal(nativeA.principal_id, 'principal-a');
+  assert.equal(nativeA.agent_id, 'agent-a');
+  assert.equal(nativeB.principal_id, 'principal-b');
+  assert.equal(nativeB.agent_id, 'agent-b');
+  assert.equal(b.input.speaker_id, 'agent-b');
+  assert.notEqual(a.input.session_id, b.input.session_id);
+  assert.notEqual(nativeA.evaluation_id, nativeB.evaluation_id);
+  assert.notEqual(nativeA.decision_id, nativeB.decision_id);
+  assert.notEqual(a.response.requestId, b.response.requestId);
+  assert.equal(a.receipt?.status, 'succeeded');
+  assert.equal(b.response.status, 403);
+  assert.equal(b.response.body.authority_decision.reason, 'capability_revoked');
+  assert.equal(a.ledgerAfter.length, 1);
+  assert.equal(b.ledgerAfter.length - b.ledgerBefore.length, 0);
+  assert.deepEqual(a.fileAfter, b.fileAfter);
+  assert.deepEqual(a.input.args, b.input.args);
+  assert.deepEqual(b.input.harness_provenance, b.harnessRequest.context.handoff);
+  assert.equal('lease_token' in b.input, false);
+  const tampered = structuredClone(result.timeline);
+  const record = tampered.find(r => r.category === 'governance' && r.data.requestId === 'agent-b-delegated');
+  assert.ok(record?.category === 'governance');
+  (record.data.evidence.rc2_handoff as HandoffEvidence).ledgerAfter.push({ execution_id: 'unauthorized-b', principal_id: 'principal-b' });
+  assert.equal(delegatedHandoffInvariant(tampered).passed, false, 'DENY without accounting is insufficient');
+});

@@ -40,7 +40,7 @@ export interface GatewayEvidence {
   fault: { source: 'harness'; type: string; injected: boolean };
 }
 
-export function translateEffects(requestId: string, evidence: GatewayEvidence): Awaited<ReturnType<ObserveEffects>> {
+export function translateEffects(requestId: string, evidence: Pick<GatewayEvidence, 'nativeRequestId' | 'audit' | 'ledgerBefore' | 'ledgerAfter' | 'fileBefore' | 'fileAfter'>): Awaited<ReturnType<ObserveEffects>> {
   const events = evidence.audit.filter(e => e.request_id === evidence.nativeRequestId);
   const permitted = events.some(e => e.event_type === 'tool.enforcement.allowed');
   const blocked = events.some(e => e.event_type === 'tool.enforcement.denied');
@@ -64,7 +64,7 @@ export function translateEffects(requestId: string, evidence: GatewayEvidence): 
   return { enforcement: permitted ? 'DISPATCH' : 'BLOCK', executions };
 }
 
-export async function createGatewayAdapter(original: GovernanceRequest, options: { receiptFailure?: boolean; reviewer?: boolean } = {}) {
+export async function createGatewayAdapter(original: GovernanceRequest, options: { receiptFailure?: boolean; reviewer?: boolean; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
   const load = (file: string) => import(pathToFileURL(join(rc2Root, file)).href);
   const [kingpin, sqlite, gateway, sandboxModule, executionModule, authModule, cdeModule, config] = await Promise.all([
     load('kingpin/index.js'), load('kingpin/state/sqlite.js'), load('gateway_node/server.js'),
@@ -112,11 +112,13 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
       });
     } };
     const execution = new executionModule.ExecutionRuntime({ store: executionStore, adapter });
-    const tokens = { agent: randomBytes(32).toString('base64url'), admin: randomBytes(32).toString('base64url'), reviewer: randomBytes(32).toString('base64url') };
+    const tokens = { agent: randomBytes(32).toString('base64url'), admin: randomBytes(32).toString('base64url'), reviewer: randomBytes(32).toString('base64url'), delegate: randomBytes(32).toString('base64url') };
     const context = { session_id: original.provenance.scenarioId, channel_id: 'channel', scene_id: 'scene', task_id: null };
     const authentication = authModule.createAuthentication({ schema_version: '1.0', principals: [
       { token: tokens.agent, principal_id: original.principal, role: 'agent', agent_id: original.agent, allowed_contexts: [context] },
       { token: tokens.admin, principal_id: 'harness-admin', role: 'authority_admin' },
+      ...(options.delegatedAgent ? [{ token: tokens.delegate, principal_id: options.delegatedAgent.principal, role: 'agent',
+        agent_id: options.delegatedAgent.agent, allowed_contexts: [{ ...context, session_id: options.delegatedAgent.sessionId }] }] : []),
       ...(options.reviewer ? [{ token: tokens.reviewer, principal_id: 'harness-reviewer', role: 'reviewer', allowed_contexts: [context] }] : []),
     ] });
     const python = process.env.CDE_PYTHON ?? (existsSync(join(rc2Root, '.venv-task/bin/python')) ? join(rc2Root, '.venv-task/bin/python') : 'python3');
@@ -137,7 +139,7 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     const address = server!.address();
     if (!address || typeof address === 'string') throw new Error('Gateway listener unavailable');
     const url = `http://127.0.0.1:${address.port}`;
-    async function http(path: string, body?: RecordData, role: 'agent' | 'admin' | 'reviewer' = 'agent') {
+    async function http(path: string, body?: RecordData, role: 'agent' | 'admin' | 'reviewer' | 'delegate' = 'agent') {
       const response = await fetch(url + path, { method: body ? 'POST' : 'GET',
         headers: { authorization: `Bearer ${tokens[role]}`, 'content-type': 'application/json' },
         ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20_000) });

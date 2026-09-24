@@ -12,7 +12,8 @@
     "scenario:rc2": "node src/main.ts --rc2",
     "scenario:rc2-gateway": "node src/main.ts --rc2-gateway",
     "test:integration": "node --test tests/integration/*.test.ts",
-    "scenario:human-approval": "node src/adapters/kingpin-rc2/review-main.ts"
+    "scenario:human-approval": "node src/adapters/kingpin-rc2/review-main.ts",
+    "scenario:delegated-handoff": "node src/adapters/kingpin-rc2/handoff-main.ts"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",
