@@ -146,6 +146,13 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
       return { status: response.status, body: await response.json() as RecordData,
         requestId: response.headers.get('x-request-id')!, reviewId: response.headers.get('x-review-id') };
     }
+    async function readExecutionReceipt(executionId: string): Promise<RecordData> {
+      const response = await http(`/executions/${encodeURIComponent(executionId)}`, undefined, 'admin');
+      if (response.status !== 200 || response.body.execution_id !== executionId) {
+        throw new Error('Execution receipt unavailable or identity mismatch');
+      }
+      return response.body;
+    }
     const input = (request: GovernanceRequest) => {
       if (request.proposedAction !== 'action-x' || request.target !== 'target-x'
         || request.principal !== original.principal || request.agent !== original.agent
@@ -210,9 +217,7 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
         if (!decisionEvent || !log) throw new Error('No correlated native decision observed');
         let receipt: RecordData | null = null, reconciled: RecordData | null = null;
         if (response.body.execution_id) {
-          const observed = await http(`/executions/${response.body.execution_id}`, undefined, 'admin');
-          if (observed.status !== 200) throw new Error('Execution receipt unavailable');
-          receipt = observed.body;
+          receipt = await readExecutionReceipt(response.body.execution_id);
           if (receipt.status === 'unknown') {
             const resolved = await http(`/executions/${receipt.execution_id}/reconcile`, {}, 'admin');
             if (resolved.status !== 200) throw new Error('Native reconciliation failed');
@@ -235,6 +240,6 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     };
     const observe: ObserveEffects = async (request, decision) => translateEffects(request.requestId,
       decision.evidence.kingpin_rc2_gateway as GatewayEvidence);
-    return { runtime, observe, close, root, http, audit, ledger, inspect, input };
+    return { runtime, observe, close, root, http, audit, ledger, inspect, input, readExecutionReceipt };
   } catch (error) { await close(); throw error; }
 }

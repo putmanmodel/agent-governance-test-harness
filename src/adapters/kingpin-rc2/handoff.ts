@@ -41,9 +41,7 @@ export async function runDelegatedHandoff() {
         if (!decision || !response.body.authority_decision) throw new Error('Fresh native decision missing');
         let receipt = null;
         if (response.body.execution_id) {
-          const accounting = await f.http(`/executions/${response.body.execution_id}`, undefined, 'admin');
-          if (accounting.status !== 200) throw new Error('Native receipt unavailable');
-          receipt = accounting.body;
+          receipt = await f.readExecutionReceipt(response.body.execution_id);
         }
         const evidence: HandoffEvidence = {
           sources: { handoff: 'harness', cde: 'rc2:cde', authority: 'rc2:kingpin', enforcement: 'rc2:gateway', execution: 'rc2:execution' },

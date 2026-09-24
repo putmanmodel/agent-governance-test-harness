@@ -2,6 +2,8 @@ import type { Invariant } from '../../core/assertions.ts';
 import type { GovernanceRequest } from '../../core/runtime-adapter.ts';
 // Native RC2 records remain opaque evidence, including their immutable binding hashes.
 export interface ReviewEvidence {
+  originalReviewId: string;
+  exchanges: { sequence: number; path: string; requestId: string; status: number }[];
   source: Record<string, string>;
   harnessRequest: GovernanceRequest;
   input: Record<string, any>;
@@ -24,7 +26,43 @@ export const humanApprovalInvariant: Invariant = timeline => {
   const get = (id: string) => records.find(r => r.data.requestId === id)?.data.evidence.rc2_review as ReviewEvidence | undefined;
   const held = get('review-original'), executed = get('review-consume'), replay = get('review-replay');
   const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const stages = [
+    records.find(r => r.data.requestId === 'review-original'),
+    timeline.find(r => r.category === 'scenario' && r.data.type === 'GRANT' && r.data.payload.authorityRef === 'original-review'),
+    records.find(r => r.data.requestId === 'review-consume'),
+    timeline.find(r => r.category === 'execution' && r.data.requestId === 'review-consume' && r.data.status === 'STARTED'),
+    timeline.find(r => r.category === 'execution' && r.data.requestId === 'review-consume' && r.data.status === 'SUCCEEDED'),
+    timeline.find(r => r.category === 'scenario' && r.data.type === 'RETRY' && r.data.requestId === 'review-replay'),
+    records.find(r => r.data.requestId === 'review-replay'),
+    timeline.find(r => r.category === 'enforcement' && r.data.requestId === 'review-replay' && r.data.result === 'BLOCK'),
+    timeline.find(r => r.category === 'execution' && r.data.requestId === 'review-replay' && r.data.status === 'NOT_STARTED'),
+  ];
+  const timelineOrdered = stages.every((r, i) => r && (i === 0 || (stages[i - 1]
+    && r.sequence > stages[i - 1]!.sequence && timeline.indexOf(r) > timeline.indexOf(stages[i - 1]!))));
+  // RC2 audit is returned in append order; no wall-clock timestamp assumptions.
+  const lifecycle = ['review.requested', 'review.approved', 'review.execution_consumed', 'tool.execution.started', 'tool.execution.succeeded']
+    .map(type => executed?.originalAudit.findIndex(e => e.event_type === type && e.request_id === held?.response.requestId) ?? -1);
+  const nativeOrdered = lifecycle.every((index, i) => index >= 0 && (i === 0 || index > lifecycle[i - 1]));
+  const expectedExchanges = held && executed && replay ? [
+    { path: '/tool/observed', response: held.response },
+    { path: `/reviews/${held.originalReviewId}/approve`, response: executed.approval },
+    { path: `/reviews/${held.originalReviewId}/execute`, response: executed.response },
+    { path: '/tool/observed', response: replay.response },
+    { path: `/reviews/${held.originalReviewId}/execute`, response: replay.replayResponse },
+  ] : [];
+  const exchangesOrdered = expectedExchanges.length === 5 && replay?.exchanges?.length === 5
+    && expectedExchanges.every((expected, i) => {
+      const actual = replay.exchanges[i];
+      return actual.sequence === i + 1 && actual.path === expected.path && !!expected.response
+        && actual.requestId === expected.response.requestId && actual.status === expected.response.status;
+    }) && new Set(replay.exchanges.map(e => e.requestId)).size === 5
+    && same(held?.exchanges, replay.exchanges.slice(0, 1))
+    && same(executed?.exchanges, replay.exchanges.slice(0, 3));
   const passed = !!held && !!executed && !!replay
+    && timelineOrdered && nativeOrdered && exchangesOrdered
+    && held.originalReviewId === held.review.review_id
+    && executed.originalReviewId === held.originalReviewId && replay.originalReviewId === held.originalReviewId
+    && replay.review.review_id !== replay.originalReviewId
     && held.response.status === 428 && held.response.body.authority_decision?.outcome === 'human_review'
     && held.audit.some(e => e.event_type === 'tool.enforcement.review')
     && held.review.status === 'pending' && held.ledgerBefore.length === 0 && held.ledgerAfter.length === 0

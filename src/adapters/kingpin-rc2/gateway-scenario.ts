@@ -13,7 +13,36 @@ export const gatewayInvariant: Invariant = timeline => {
   const id = first?.receipt?.execution_id;
   const completion = first?.reconciled;
   const revoke = retry?.controls.find(c => c.type === 'REVOKE');
-  const nativeProof = !!first && !!retry && typeof id === 'string'
+  const firstRecord = decisions.find(r => r.data.requestId === 'request-1');
+  const retryRecord = decisions.find(r => r.data.requestId === 'request-2');
+  const nativeFirst = first?.audit.find(e => e.event_type === 'authority.decision');
+  const nativeRetry = retry?.audit.find(e => e.event_type === 'authority.decision');
+  const cdeFirst = first?.audit.find(e => e.event_type === 'cde.signal.created');
+  const cdeRetry = retry?.audit.find(e => e.event_type === 'cde.signal.created');
+  const freshEvaluation = !!first && !!retry && !!nativeFirst && !!nativeRetry && !!cdeFirst && !!cdeRetry
+    && first.harnessRequest.requestId === firstRecord?.data.requestId
+    && retry.harnessRequest.requestId === retryRecord?.data.requestId
+    && first.harnessRequest.requestId !== retry.harnessRequest.requestId
+    && typeof first.native.evaluation_id === 'string' && typeof retry.native.evaluation_id === 'string'
+    && first.native.evaluation_id !== retry.native.evaluation_id
+    && nativeFirst.decision_id === firstRecord?.data.decisionId
+    && nativeRetry.decision_id === retryRecord?.data.decisionId
+    && nativeFirst.decision_id !== nativeRetry.decision_id
+    && cdeFirst.event_id !== cdeRetry.event_id
+    && [first, retry].every((observation, i) => {
+      const decision = i === 0 ? nativeFirst : nativeRetry;
+      const signal = i === 0 ? cdeFirst : cdeRetry;
+      return typeof signal.event_id === 'string' && typeof decision.decision_id === 'string'
+        && signal.request_id === observation.nativeRequestId && decision.request_id === observation.nativeRequestId
+        && signal.evaluation_id === observation.native.evaluation_id && decision.evaluation_id === observation.native.evaluation_id
+        && signal.decision_id === decision.decision_id
+        && observation.cde.top_event?.event_id === observation.native.evaluation_id
+        && signal.principal_id === observation.harnessRequest.principal && decision.principal_id === observation.harnessRequest.principal
+        && signal.agent_id === observation.harnessRequest.agent && decision.agent_id === observation.harnessRequest.agent
+        && decision.outcome === observation.native.outcome
+        && observation.audit.indexOf(signal) < observation.audit.indexOf(decision);
+    });
+  const nativeProof = !!first && !!retry && freshEvaluation && typeof id === 'string'
     && first.native.outcome === 'allow'
     && first.audit.some(e => e.event_type === 'tool.enforcement.allowed')
     && ['tool.execution.started', 'tool.execution.unknown', 'tool.execution.reconciled_succeeded'].every(type =>
