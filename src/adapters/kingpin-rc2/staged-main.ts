@@ -1,0 +1,10 @@
+import { fileURLToPath } from 'node:url';
+import { runStagedWrite } from './staged.ts';
+import { writeJsonl } from '../../reporters/jsonl-reporter.ts';
+import { formatConsole } from '../../reporters/console-reporter.ts';
+const result = await runStagedWrite();
+await writeJsonl(fileURLToPath(new URL('../../../artifacts/staged-write-after-revocation.rc2-gateway.jsonl', import.meta.url)), result.timeline);
+console.log('Harness-controlled deferral; real RC2 staging and later governance. No native scheduler or deferred authorization contract.');
+console.log(formatConsole(result.timeline));
+console.log(`${result.passed ? 'PASS' : 'FAIL'}: ${result.assertions.filter(a => a.passed).length}/${result.assertions.length} invariants passed.`);
+if (!result.passed) process.exitCode = 1;

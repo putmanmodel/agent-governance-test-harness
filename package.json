@@ -17,7 +17,8 @@
     "scenario:in-flight": "node src/adapters/kingpin-rc2/in-flight-main.ts",
     "scenario:subprocess": "node src/adapters/subprocess/main.ts",
     "suite:subprocess": "node src/adapters/subprocess/suite-main.ts",
-    "harness": "node src/harness-main.ts"
+    "harness": "node src/harness-main.ts",
+    "scenario:staged": "node src/adapters/kingpin-rc2/staged-main.ts"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

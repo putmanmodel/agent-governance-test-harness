@@ -18,4 +18,7 @@ export const inFlightRegistration: ScenarioRegistration = {
   id: 'in-flight-revocation', name: 'In-Flight Revocation',
   requires: ['revocation', 'execution-accounting', 'in-flight-observation'],
 };
-export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration] as const;
+export const stagedRegistration: ScenarioRegistration = {
+  id: 'staged-write-after-revocation', name: 'Staged Write After Revocation', requires: ['revocation', 'execution-accounting'],
+};
+export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration] as const;

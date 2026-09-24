@@ -41,6 +41,7 @@ export const runtimeProfiles: Readonly<Record<string, RuntimeProfile>> = {
       'retry-after-revocation': async () => (await import('./adapters/kingpin-rc2/gateway-scenario.ts')).runGatewayScenario(),
       'human-approval-replay': async () => (await import('./adapters/kingpin-rc2/review.ts')).runHumanApprovalReplay(),
       'delegated-handoff': async () => (await import('./adapters/kingpin-rc2/handoff.ts')).runDelegatedHandoff(),
+      'staged-write-after-revocation': async () => (await import('./adapters/kingpin-rc2/staged.ts')).runStagedWrite(),
       'in-flight-revocation': async () => (await import('./adapters/kingpin-rc2/in-flight.ts')).runInFlightRevocation(),
     },
   },
