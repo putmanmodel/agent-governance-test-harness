@@ -69,6 +69,7 @@ Governance submission is mandatory. Current optional capabilities are:
 | `execution-accounting` | Observe native execution records sufficient to establish execution/no second execution |
 | `reconciliation` | Obtain native resolution of uncertain execution in the Gateway retry path |
 | `multi-principal` | Exercise separately authenticated principal/agent identities |
+| `durable-restart` | Replace the runtime process and reopen preserved governance state for the implemented restart driver; not crash/UNKNOWN recovery or CDE-history persistence |
 | `in-flight-observation` | Establish execution start and observe revocation/disposition ordering while outstanding |
 
 Declarations live beside adapters; requirements live in [`scenarios/registrations.ts`](../scenarios/registrations.ts). They are claims about configured integration paths, not automatic detection. Cancellation is not required for in-flight revocation. Human review, handoff and in-flight drivers/assertions currently remain RC2-specific; your capability flags alone do not port them.
@@ -120,4 +121,4 @@ npm run harness -- run --runtime subprocess \
 
 No source registration is needed. Use repeated `--command-arg` entries for argv (dash-prefixed values use `--command-arg=-u`), not a quoted shell command. Local code executes with your privileges. Omit `--runtime-id` for `external-subprocess`; stderr remains separate from JSONL stdout. `--json` uses the existing suite report format.
 
-All six existing capability names are recognized, but only generic retry has a subprocess driver. Declarations do not implement new drivers: an applicable scenario without a driver fails. With only `revocation`, expect 1 PASS / 4 UNSUPPORTED. Without capabilities, expect 0 PASS / 5 UNSUPPORTED and no process launch. Unknown capabilities/options fail early. The driver closes the process in `finally` on success and failure; CLI usage validation finishes before driver creation.
+All seven existing capability names are recognized, but only generic retry has a subprocess driver. Declarations do not implement new drivers: an applicable scenario without a driver fails. With only `revocation`, expect 1 PASS / 5 UNSUPPORTED. Without capabilities, expect 0 PASS / 6 UNSUPPORTED and no process launch. Unknown capabilities/options fail early. The driver closes the process in `finally` on success and failure; CLI usage validation finishes before driver creation.

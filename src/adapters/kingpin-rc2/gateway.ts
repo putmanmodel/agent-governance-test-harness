@@ -64,17 +64,19 @@ export function translateEffects(requestId: string, evidence: Pick<GatewayEviden
   return { enforcement: permitted ? 'DISPATCH' : 'BLOCK', executions };
 }
 
-export async function createGatewayAdapter(original: GovernanceRequest, options: { receiptFailure?: boolean; reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
+export async function createGatewayAdapter(original: GovernanceRequest, options: { persistent?: { root: string; create: boolean }; receiptFailure?: boolean; reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
   const load = (file: string) => import(pathToFileURL(join(rc2Root, file)).href);
   const [kingpin, sqlite, gateway, sandboxModule, executionModule, authModule, cdeModule, config] = await Promise.all([
     load('kingpin/index.js'), load('kingpin/state/sqlite.js'), load('gateway_node/server.js'),
     load('evaluation/sandbox.js'), load('execution/runtime.js'), load('kingpin/auth/access.js'),
     load('evaluation/cde.js'), load('evaluation/config.js'),
   ]);
-  const root = mkdtempSync(join(tmpdir(), 'governance-gateway-'));
+  const root = options.persistent?.root ?? mkdtempSync(join(tmpdir(), 'governance-gateway-'));
   const sandbox = join(root, 'sandbox');
-  mkdirSync(sandbox, { mode: 0o700 });
-  writeFileSync(join(sandbox, 'seed.txt'), 'read-only setup fixture\n', { mode: 0o600 });
+  if (!options.persistent || options.persistent.create) {
+    mkdirSync(sandbox, { mode: 0o700 });
+    writeFileSync(join(sandbox, 'seed.txt'), 'read-only setup fixture\n', { mode: 0o600 });
+  }
   const target = join(sandbox, 'effect.txt');
   let store: Store | undefined;
   let server: Server | undefined;
@@ -87,11 +89,11 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
         server = undefined;
       }
     } finally {
-      try { await cde?.close(); } finally { try { store?.close(); } finally { rmSync(root, { recursive: true, force: true }); } }
+      try { await cde?.close(); } finally { try { store?.close(); } finally { if (!options.persistent) rmSync(root, { recursive: true, force: true }); } }
     }
   };
   try {
-    store = new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: true }) as Store;
+    store = new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: options.persistent?.create ?? true }) as Store;
     const authority = new kingpin.KingpinAuthority({ store });
     const sandboxAdapter = sandboxModule.createSandboxAdapter(sandbox);
     const adapter = options.beforeEffect ? { ...sandboxAdapter, execute(request: RecordData) {

@@ -30,14 +30,17 @@ UNSUPPORTED  In-Flight Revocation
 UNSUPPORTED  Staged Write After Revocation
              missing: execution-accounting
 
-1 passed; 0 failed; 4 unsupported (not passed coverage).
+UNSUPPORTED  Capability Revocation Survives Restart
+             missing: execution-accounting, durable-restart
+
+1 passed; 0 failed; 5 unsupported (not passed coverage).
 ```
 
 - **PASS:** the selected scenario's assertions passed.
 - **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the five scenarios above. The common CLI does not write timeline artifacts.
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the six scenarios above. The common CLI does not write timeline artifacts.
 
 ## Run your own subprocess runtime
 
@@ -58,7 +61,7 @@ Replace the executable/path with your own process (for example `--command python
 
 Repeat `--capability` to declare supported capabilities from the documented vocabulary. Governance is implicit. `revocation` enables generic retry; without it, retry is UNSUPPORTED, never PASS. Currently this profile only supplies a generic retry driver: claiming enough capabilities to make another scenario applicable produces FAIL for its missing driver. Unknown capability names, missing commands, repeated singleton options and external-only options on built-in profiles are rejected before launch. Repeated capability names are deduplicated; repeated command arguments preserve their order.
 
-The existing protocol, five-second timeout and driver-owned cleanup apply. No real execution is added; a normal run reports 1 PASS and 4 UNSUPPORTED. See the [outside-developer example](docs/ADAPTER_AUTHORING.md#external-process-without-source-registration).
+The existing protocol, five-second timeout and driver-owned cleanup apply. No real execution is added; a normal run reports 1 PASS and 5 UNSUPPORTED. See the [outside-developer example](docs/ADAPTER_AUTHORING.md#external-process-without-source-registration).
 
 ## Runtime profiles and proof boundaries
 
@@ -66,7 +69,7 @@ The existing protocol, five-second timeout and driver-owned cleanup apply. No re
 | --- | --- | --- |
 | `subprocess-reference` | Generic Retry After Revocation | Simulated enforcement and effects |
 | `kingpin-rc2-governance` | Generic Retry After Revocation | Simulated enforcement and effects |
-| `kingpin-rc2-gateway` | All five RC2 scenario paths | Real RC2 Gateway and bounded sandbox execution |
+| `kingpin-rc2-gateway` | All six RC2 scenario paths | Real RC2 Gateway and bounded sandbox execution |
 
 Governance-only success does **not** prove actual side-effect enforcement. UNKNOWN implies neither cancellation nor absence of effects. The reference subprocess owns its own single-authority state; it is a portability fixture, not a production policy engine.
 
@@ -103,7 +106,7 @@ The command emits one JSON suite report on stdout; diagnostics may appear on std
     "missingCapabilities": [],
     "reason": "Scenario assertions passed."
   }],
-  "summary": { "passed": 1, "failed": 0, "unsupported": 4 }
+  "summary": { "passed": 1, "failed": 0, "unsupported": 5 }
 }
 ```
 
@@ -170,6 +173,8 @@ RC2 has no task-delegation API. The delegated PROPOSE event carries `context.han
 
 Run `npm run scenario:in-flight` for `artifacts/in-flight-revocation.rc2-gateway.jsonl`. A worker-thread Gateway uses the real sandbox adapter wrapped by a pre-effect `Atomics.wait` barrier. The parent verifies the committed STARTED receipt/audit through read-only SQLite, sends a real `/revoke`, observes a bounded 200 ms pending-acknowledgement window, and releases the write. This boundary is harness timing injection, not fabricated execution state. Temporary resources are closed and removed.
 
+Revocation was requested while execution was outstanding, but RC2’s serialized synchronous execution completed before revocation became effective and was acknowledged. This experiment proves preservation of execution truth and subsequent authority contraction; it does not prove effective mid-flight revocation or cancellation.
+
 Observed RC2 behavior: the synchronous adapter holds a SQLite writer transaction, and Gateway serializes requests. Revocation remained pending while the worker was blocked; native audit orders execution success before capability revocation. RC2 exposes no cancellation API here (`cancellation_supported: false`). The invariant preserves the native disposition (including FAILED or UNKNOWN when reported), then requires fresh governance and unchanged accounting/file state for later denied dispatch. It does not demand cancellation or success. Current serial-RC2 ordering is explicit; a change to concurrent acknowledgement would require reviewing this experiment's ordering checks.
 
 Interleaving lives in adapter evidence: parent monotonic observation order records request transmission, pending acknowledgement and barrier release; native SQLite audit sequence establishes commit order. Client response arrival is not treated as execution completion time. Outer timeline timestamps remain scenario logical times. Native receipts are retrieved through the shared hardened helper. No generic scheduler or schema change is introduced.
@@ -181,3 +186,9 @@ Run `npm run scenario:staged` for `artifacts/staged-write-after-revocation.rc2-g
 This tests harness-controlled deferral, not a native RC2 scheduler. A real Gateway write creates an inert deterministic `staged.json` describing a later `effect.txt` write. Its original native request/decision/evaluation references are associated in evidence after staging completion. Real capability revocation is acknowledged before a separate PROPOSE request crosses fresh CDE and Kingpin evaluation. Staging authorization and causal metadata do not authorize that later physical effect.
 
 The invariant requires native staging success, target absence throughout, correlated fresh later governance, capability revocation ordered before evaluation, denial, and unchanged complete execution accounting. The pending record never schedules work itself; there is no deferred contract, cancellation or rollback.
+
+## Capability Revocation Survives Restart
+
+Run `npm run scenario:restart` for `artifacts/capability-revocation-survives-restart.rc2-gateway.jsonl`. Process A completes a real bounded write, acknowledges write-capability revocation, and closes its Gateway, CDE worker and database before exiting. Only after observing A's exit does the harness start distinct Process B, which reopens the existing SQLite database (`create: false`) and sandbox. Stable principal/context and policy metadata, database/sandbox identity, preserved audit prefix and stored capability revocation prove continuity. B performs fresh CDE/Kingpin evaluation, receives denial, and leaves the complete ledger and target file unchanged. Final cleanup removes the fixture.
+
+This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 5 UNSUPPORTED.

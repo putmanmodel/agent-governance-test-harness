@@ -1,5 +1,5 @@
 export type RuntimeCapability = 'revocation' | 'human-review' | 'execution-accounting'
-  | 'reconciliation' | 'multi-principal' | 'in-flight-observation';
+  | 'durable-restart' | 'reconciliation' | 'multi-principal' | 'in-flight-observation';
 
 export interface RuntimeDeclaration {
   readonly id: string;

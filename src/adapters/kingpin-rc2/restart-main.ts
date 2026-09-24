@@ -1,0 +1,10 @@
+import { fileURLToPath } from 'node:url';
+import { runRestart } from './restart.ts';
+import { writeJsonl } from '../../reporters/jsonl-reporter.ts';
+import { formatConsole } from '../../reporters/console-reporter.ts';
+const result = await runRestart();
+await writeJsonl(fileURLToPath(new URL('../../../artifacts/capability-revocation-survives-restart.rc2-gateway.jsonl', import.meta.url)), result.timeline);
+console.log('Real process replacement and same-store reopening; fresh CDE state. No crash/UNKNOWN recovery.');
+console.log(formatConsole(result.timeline));
+console.log(`${result.passed ? 'PASS' : 'FAIL'}: ${result.assertions.filter(a => a.passed).length}/${result.assertions.length} invariants passed.`);
+if (!result.passed) process.exitCode = 1;

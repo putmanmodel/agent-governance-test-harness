@@ -6,7 +6,7 @@ import { retryAfterRevocation } from '../../../scenarios/retry-after-revocation.
 
 // Exhaustive against the core union without changing the generic contract.
 const capabilities: Record<RuntimeCapability, true> = {
-  revocation: true, 'human-review': true, 'execution-accounting': true,
+  'durable-restart': true, revocation: true, 'human-review': true, 'execution-accounting': true,
   reconciliation: true, 'multi-principal': true, 'in-flight-observation': true,
 };
 export function parseCapabilities(names: readonly string[]): RuntimeCapability[] {

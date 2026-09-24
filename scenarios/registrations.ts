@@ -21,4 +21,8 @@ export const inFlightRegistration: ScenarioRegistration = {
 export const stagedRegistration: ScenarioRegistration = {
   id: 'staged-write-after-revocation', name: 'Staged Write After Revocation', requires: ['revocation', 'execution-accounting'],
 };
-export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration] as const;
+export const restartRegistration: ScenarioRegistration = {
+  id: 'capability-revocation-survives-restart', name: 'Capability Revocation Survives Restart',
+  requires: ['revocation', 'execution-accounting', 'durable-restart'],
+};
+export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration] as const;
