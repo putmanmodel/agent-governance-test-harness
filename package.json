@@ -1,0 +1,19 @@
+{
+  "name": "agent-governance-test-harness",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.ts",
+    "scenario": "node src/main.ts",
+    "scenario:rc2": "node src/main.ts --rc2",
+    "test:integration": "node --test tests/integration/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.6",
+    "typescript": "~5.9.3"
+  }
+}
