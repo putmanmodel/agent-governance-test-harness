@@ -1,10 +1,12 @@
-# Agent Governance Test Harness
+# PUTMAN Agent Governance Test Harness
+
+Adversarial tests for runtime authority across transitions.
 
 A small, framework-neutral TypeScript harness that tests specified authority-transition invariants against observable runtime evidence, with coverage determined by the selected runtime integration and supported scenarios. The harness orchestrates conditions, captures observations and evaluates invariants; the runtime under test owns authority decisions and enforcement.
 
 CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
 
-The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). Licensing terms for public/commercial use will be provided with the public release. External contributions are not yet being solicited pending publication of contribution/licensing terms.
+The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see [licensing](#licensing) and [participation](CONTRIBUTING.md).
 
 ## Quick start — portable/default path
 
@@ -51,6 +53,18 @@ UNSUPPORTED  UNKNOWN Execution Survives Restart
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
 Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the eight scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+
+## AI-assisted setup (optional)
+
+The ordinary CLI and protocol instructions are the primary setup path. You can also ask a coding agent to read `README.md`, `docs/ADAPTER_AUTHORING.md`, `docs/SUBPROCESS_PROTOCOL.md`, and `docs/V1_DEVELOPER_PREVIEW.md`, then describe the governance/runtime system you want to test.
+
+Reusable prompt:
+
+> Read README.md, docs/ADAPTER_AUTHORING.md, docs/SUBPROCESS_PROTOCOL.md, and docs/V1_DEVELOPER_PREVIEW.md in this repository. I want to test my governance runtime at `<describe or provide path to runtime>`. Determine the smallest integration path, explain what you intend to change, implement only the required bridge or adapter, and run the applicable harness scenarios. Prefer the external subprocess CLI when suitable; it requires no harness source edits. Do not modify the harness core, assertions, evidence requirements, or expected results merely to make my runtime pass.
+
+An AI coding agent can help build a subprocess bridge, interpret FAIL and UNSUPPORTED, locate timeline artifacts, and explain missing evidence. AI assistance is optional and does not change the meaning of test results.
+
+**Do not modify the harness core, assertions, evidence requirements, or expected results merely to make a tested runtime pass.**
 
 ## Portable release smoke
 
@@ -257,3 +271,13 @@ Both cases inspect committed state outside A before and after death. Only after 
 The durable **harness-labelled** `execute` journal entry means entry into the harness wrapper, not completion of the underlying executor or physical write. A records one wrapper entry in each case; parent snapshots establish zero physical effects in the before case and one completed write in the after case. B records zero execute entries and one native sandbox reconciliation. Native ledger/audit and unchanged file evidence corroborate no redispatch. Reconciliation inspects evidence; retry/re-execution performs the operation again. UNKNOWN is not retry authority.
 
 The common CLI reports one UNKNOWN-family PASS only when both experiments pass: Gateway remains 8 PASS; subprocess profiles remain 1 PASS / 7 UNSUPPORTED. Existing `execution-accounting`, `durable-restart`, and `reconciliation` capabilities suffice. This POSIX SIGKILL/flock driver tests specific crash semantics; `durable-restart` alone does not promise all crash behavior. Generic core and timeline schema remain unchanged (version 1). Direct commands refresh their respective artifacts; native IDs/PIDs/timestamps are not deterministic.
+
+## Licensing
+
+Copyright © 2026 Stephen A. Putman. PUTMAN is the project/brand identity.
+
+The harness is source-available. Personal/hobby, educational, academic/noncommercial research, independent noncommercial security research and noncommercial open-source experimentation are free permitted uses. Interoperability development and independent adapter creation/testing are also permitted. Organizations receive one free 30-day commercial evaluation solely to assess adoption; affiliates share the period and it does not restart for new teams, downloads or runtimes.
+
+Ongoing commercial development, CI, production validation and service use after evaluation require a separate commercial license. Independent adapters may be published or sold under their authors' terms without incorporating substantial Harness code. Truthful test publication, including negative findings, is permitted; use implies no certification or endorsement. Redistribution of the Harness itself requires separate written permission.
+
+See [LICENSE](LICENSE) for the governing terms and [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for commercial information. External code contributions are not currently solicited; [issue reports, discussion, independent adapters and findings remain welcome](CONTRIBUTING.md).

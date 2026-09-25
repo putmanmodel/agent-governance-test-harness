@@ -1,0 +1,165 @@
+PUTMAN Agent Governance Test Harness Source-Available Evaluation License v1.0
+
+Copyright © 2026 Stephen A. Putman
+
+1. Identity and scope
+
+Stephen A. Putman is the licensor ("Licensor"). "Harness" means the PUTMAN
+Agent Governance Test Harness software and accompanying repository material
+provided under this license, including modifications of that material. PUTMAN
+is the project/brand identity, not a representation of an incorporated entity.
+"You" means the individual or Organization exercising rights under this license.
+"Organization" includes an organization and its controlled, controlling, and
+common-control affiliates. Control means the power to direct management or
+policies, directly or indirectly.
+
+This is a source-available license. It grants only the permissions stated below,
+subject to its conditions. Separately identified third-party material remains
+subject to its own applicable terms.
+
+2. Free permitted uses
+
+You may use and make the copies of the Harness necessary for the following uses,
+without charge:
+
+- personal and hobby use;
+- education and classroom use;
+- academic and noncommercial research;
+- independent noncommercial security research;
+- noncommercial open-source experimentation and development;
+- interoperability development;
+- creation and testing of independent adapters and integrations; and
+- qualifying commercial evaluation under Section 3.
+
+These permissions do not grant public redistribution rights to the Harness.
+Commercial operational reliance described in Section 4 is subject to that
+section; creating an adapter does not independently authorize such reliance.
+
+3. Commercial evaluation
+
+Each Organization is permitted one evaluation period of 30 consecutive calendar
+days, beginning with that Organization's first commercial evaluation use of the
+Harness. Evaluation is permitted solely to determine the Harness's suitability
+for adoption. The Licensor may extend the period in writing.
+
+Controlled and common-control affiliates are part of the same Organization.
+Reinstalling, downloading again, modifying, forking, changing employees or teams,
+moving use to an affiliate, or testing another runtime does not reset or renew
+the period. Evaluation periods may not be repeatedly recreated through employees,
+affiliates, contractors, engagements, or intermediaries.
+
+A consultant or service provider may assist a client during that client's valid
+evaluation period. Ongoing paid use for client services requires commercial
+licensing; changing consultants or engagements does not restart evaluation.
+
+4. Commercial licensing
+
+After the evaluation period, a separate commercial license is required for
+ongoing commercial activity involving the Harness, including:
+
+- recurring commercial development or testing;
+- automated or recurring CI/CD;
+- release qualification or release gating;
+- testing used to develop, maintain, validate, or improve commercial products
+  or services;
+- production validation;
+- ongoing internal commercial agent or governance testing;
+- commercial security, assurance, or compliance work;
+- paid consulting or professional services;
+- customer testing or reporting;
+- hosted testing or governance-validation services;
+- embedding the Harness in another commercial product, platform, or tool;
+- commercial redistribution; and
+- other operational commercial reliance.
+
+During evaluation, commercial use must still be solely for the purpose stated
+in Section 3. Neither evaluation nor this section grants redistribution rights
+otherwise withheld by Section 7.
+
+Noncommercial open-source projects qualify for free use. Commercial organizations
+developing, supporting, hosting, or selling open-source products follow the same
+commercial-use rules as other commercial organizations.
+
+The rules apply neutrally whether the runtime tested is CDE/Kingpin, a competing
+system, or an internal system. Commercial terms are arranged separately; no
+prices are established by this license.
+
+5. Modifications
+
+You may modify and fork the Harness for otherwise permitted uses. Modification
+or forking does not remove these restrictions or grant additional rights to the
+Harness or substantial modified Harness code.
+
+6. Independent adapters and interoperability
+
+Independently written adapters and integrations may be created, published,
+distributed, licensed, and sold under terms chosen by their authors, provided
+they do not incorporate or redistribute substantial portions of the Harness
+itself. Interoperability alone does not subject independent software to this
+license. Licensing an independent adapter does not grant its users additional
+rights to the Harness.
+
+7. Redistribution
+
+Except with separate written permission from the Licensor, you may not publicly
+redistribute, relicense, sublicense, sell, or otherwise distribute the Harness
+or substantial portions of modified Harness code. Normal copying necessary for
+permitted internal, research, or evaluation use remains allowed. The independent
+adapter permissions in Section 6 and result-publication permissions in Section 8
+remain available subject to their stated conditions.
+
+8. Test results and truthful identification
+
+You may freely publish truthful results, benchmarks, criticism, comparisons,
+research, and analyses, including negative results involving CDE/Kingpin or
+PUTMAN. Truthful statements that something was tested with the Harness are
+permitted. Publication of results does not grant redistribution rights to the
+Harness itself.
+
+You may not falsely claim PUTMAN certification, endorsement, approval,
+sponsorship, or guarantee.
+
+9. No certification
+
+Passing tests means only that specified invariants passed under the tested
+configuration and evidence. It is not security certification, proof of universal
+policy correctness, a safety guarantee, an exactly-once guarantee, a guarantee
+of no side effects, regulatory certification, or endorsement.
+
+10. Copyright and branding
+
+Copyright in the Harness remains with Stephen A. Putman. No trademark or branding
+rights are granted beyond truthful identification and compatibility references.
+All rights not expressly granted are reserved.
+
+11. Termination
+
+Your rights under this license terminate upon your material breach of its terms.
+Upon termination, you must cease exercising the rights granted by this license.
+Termination does not enlarge any rights or remove restrictions on unauthorized
+use or redistribution.
+
+12. Warranty disclaimer and limitation of liability
+
+THE HARNESS IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, TITLE, AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW,
+THE LICENSOR SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY,
+WHETHER IN CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
+WITH THE HARNESS OR ITS USE, INCLUDING DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+OR CONSEQUENTIAL DAMAGES.
+
+13. Separate agreements and contributions
+
+A separately negotiated commercial license or other written permission from
+the Licensor may grant different rights on its stated terms.
+
+External contributions are not currently solicited. Contribution and intellectual
+property terms may be published later. This statement does not prohibit issue
+reports, discussion, independent adapter development, or publication of findings
+as permitted by this license.
+
+14. License version
+
+This is license version 1.0. Future license versions do not retroactively alter
+rights granted to copies received under this version.

@@ -1,6 +1,6 @@
 # Planned v1.0.0 developer preview
 
-This is the release boundary for a clone-installed preview, not an announcement that v1 has been tagged. The harness tests specified authority-transition invariants against observable runtime evidence, with coverage determined by the selected runtime integration and supported scenarios. It does not certify security, universal policy correctness, exactly-once execution, cancellation, or absence of all side effects.
+This is the release boundary for the PUTMAN Agent Governance Test Harness clone-installed preview, not an announcement that v1 has been tagged. The harness tests specified authority-transition invariants against observable runtime evidence, with coverage determined by the selected runtime integration and supported scenarios. It does not certify security, universal policy correctness, exactly-once execution, cancellation, or absence of all side effects.
 
 ## Stabilized public surfaces
 
@@ -105,4 +105,8 @@ The portable/default path needs no CDE/Kingpin checkout. Default unit tests read
 
 ## Publication posture
 
-Distribution remains repository clone plus `npm ci`; `private: true` intentionally prevents npm publication. Licensing terms for public/commercial use will be provided with the public release. External contributions are not yet being solicited pending publication of contribution/licensing terms. No license grant, pricing or commercial terms are specified here. The owner must settle those terms before public release.
+Distribution remains repository clone plus `npm ci`; `private: true` intentionally prevents npm publication. The harness is source-available under the [Source-Available Evaluation License v1.0](../LICENSE), copyright © 2026 Stephen A. Putman. Free permitted uses, the one-per-Organization 30-day commercial evaluation, ongoing commercial-use requirements and redistribution restrictions are defined there; see [commercial licensing information](../COMMERCIAL_LICENSE.md) for the contact placeholder.
+
+Independent adapters are permitted under the license's interoperability boundary and may carry their authors' own terms. Truthful results and criticism may be published; no certification or endorsement follows from a passing run. External code contributions are not currently solicited pending contribution/IP terms; [issue reports, discussion and independent work remain welcome](../CONTRIBUTING.md).
+
+[AI-assisted setup](../README.md#ai-assisted-setup-optional) is optional. The documented CLI/protocol path remains primary. An assistant must not weaken the core, assertions, evidence requirements or expected results to make a runtime pass. These repository-material changes do not alter the stable/experimental contract above.

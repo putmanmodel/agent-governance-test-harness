@@ -28,5 +28,6 @@
     "@types/node": "^24.13.6",
     "typescript": "~5.9.3"
   },
-  "description": "Tests authority-transition invariants against observable runtime evidence."
+  "description": "PUTMAN Agent Governance Test Harness: adversarial tests for runtime authority across transitions.",
+  "license": "SEE LICENSE IN LICENSE"
 }
