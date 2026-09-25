@@ -27,4 +27,4 @@ Truthful results, benchmarks, criticism, comparisons, research and analyses may 
 
 Prices are not fixed publicly. Commercial terms and any redistribution permission are arranged separately.
 
-**Commercial contact information will be published with the public release.**
+**Commercial licensing inquiries: putmanmodel@pm.me**
