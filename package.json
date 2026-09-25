@@ -21,10 +21,12 @@
     "scenario:staged": "node src/adapters/kingpin-rc2/staged-main.ts",
     "scenario:restart": "node src/adapters/kingpin-rc2/restart-main.ts",
     "scenario:review-restart": "node src/adapters/kingpin-rc2/review-restart-main.ts",
-    "scenario:unknown-restart": "node src/adapters/kingpin-rc2/unknown-restart-main.ts"
+    "scenario:unknown-restart": "node src/adapters/kingpin-rc2/unknown-restart-main.ts",
+    "smoke": "node scripts/release-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",
     "typescript": "~5.9.3"
-  }
+  },
+  "description": "Tests authority-transition invariants against observable runtime evidence."
 }

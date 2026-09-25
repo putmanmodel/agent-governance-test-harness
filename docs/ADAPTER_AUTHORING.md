@@ -80,44 +80,17 @@ These interfaces are early. The mandatory control method, separate observation c
 
 ## External process without source registration
 
-For a minimal standalone process, save this as `my-runtime.py` outside the harness. It is a single-authority example, not production policy; replace its authority behavior with calls to your runtime. It emits no tool effects.
+Use the checked-in [Python example](../examples/python-governance-runtime.py). It uses only the Python standard library and simple single-authority state, not production policy. Replace its authority behavior with calls to your runtime; it emits no tool effects. This is the example exercised by `npm run smoke` through the actual external CLI.
 
-```python
-import json
-import sys
-
-active = False
-evaluation = 0
-for line in sys.stdin:
-    message = json.loads(line)
-    if message["protocol_version"] != "1":
-        raise ValueError("unsupported protocol")
-    response = {"protocol_version": "1", "id": message["id"]}
-    if message["op"] == "inject":
-        if message["authority_ref"] != "authority-1" or message["type"] not in ("GRANT", "REVOKE"):
-            raise ValueError("unknown control")
-        active = message["type"] == "GRANT"
-        response.update(kind="ack", applied=True, type=message["type"], authority_ref="authority-1")
-    elif message["op"] == "submit":
-        request = message["request"]
-        evaluation += 1
-        allowed = active and request.get("authority_ref") == "authority-1"
-        response.update(kind="decision", request_id=request["request_id"],
-                        decision_id=f"decision-{evaluation}", evaluation_id=f"evaluation-{evaluation}",
-                        outcome="allow" if allowed else "deny", reason="Current authority evaluated",
-                        evidence={"authority_valid": active})
-    else:
-        raise ValueError("unknown operation")
-    print(json.dumps(response), flush=True)
-```
-
-From the harness directory:
+From the harness directory, with `python3` on PATH:
 
 ```bash
 npm run harness -- run --runtime subprocess \
-  --command python3 --command-arg /absolute/path/to/my-runtime.py \
-  --capability revocation --runtime-id my-governance-layer --suite current
+  --command python3 --command-arg examples/python-governance-runtime.py \
+  --capability revocation --runtime-id python-example --suite current
 ```
+
+To connect your own process, replace the script path with its absolute path.
 
 No source registration is needed. Use repeated `--command-arg` entries for argv (dash-prefixed values use `--command-arg=-u`), not a quoted shell command. Local code executes with your privileges. Omit `--runtime-id` for `external-subprocess`; stderr remains separate from JSONL stdout. `--json` emits suite report version 1. Add `--artifact-dir ./artifacts/run` to save available timelines and receive absolute artifact paths.
 

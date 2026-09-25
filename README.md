@@ -1,10 +1,14 @@
 # Agent Governance Test Harness
 
-A small, framework-neutral TypeScript harness for testing whether governance boundaries survive retries, revoked authority, approval replay and task handoff. The harness orchestrates conditions, captures observations and evaluates invariants; the runtime under test owns authority decisions and enforcement.
+A small, framework-neutral TypeScript harness that tests specified authority-transition invariants against observable runtime evidence, with coverage determined by the selected runtime integration and supported scenarios. The harness orchestrates conditions, captures observations and evaluates invariants; the runtime under test owns authority decisions and enforcement.
 
 CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
 
-## Quick start
+The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). Licensing terms for public/commercial use will be provided with the public release. External contributions are not yet being solicited pending publication of contribution/licensing terms.
+
+## Quick start — portable/default path
+
+After cloning, run these commands from the repository root with Node 24+ and npm. No global TypeScript, build step, Python or CDE/Kingpin checkout is required for this basic path.
 
 ```bash
 npm ci
@@ -46,7 +50,19 @@ UNSUPPORTED  UNKNOWN Execution Survives Restart
 - **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` suite contains the eight scenarios above. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the eight scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+
+## Portable release smoke
+
+With Python 3 available as `python3` (standard library only, no pip install):
+
+```bash
+npm run smoke
+```
+
+This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 7 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
+
+[Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64; the hosted workflow still needs its first run. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
 
 ## Help, discovery and failure evidence
 
@@ -161,7 +177,7 @@ Existing individual commands remain available:
 
 CDE owns governance signals; Kingpin owns authority; Gateway owns mechanical enforcement; RC2 execution machinery owns effects, receipts and reconciliation. The harness does not reproduce Kingpin policy.
 
-## RC2 connection
+## RC2 connection — separate reference integration
 
 Run `npm run test:integration` for the connected RC2 scenarios. `RC2_ROOT` defaults to sibling `agent-tool-governance-gateway`. `CDE_PYTHON` overrides its `.venv-task/bin/python` (otherwise `python3`). That checkout needs its existing Node/Python dependencies. Missing dependencies fail explicitly. No RC2 files or policy are modified. Verified against commit `0a5d2c26cabea3634a9a7c9e2bff67de6982ef46`.
 
