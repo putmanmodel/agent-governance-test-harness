@@ -19,6 +19,18 @@ For the developer preview, preserve:
 
 [Timeline schema 1](TIMELINE_SCHEMA.md), the TypeScript `RuntimeAdapter` API, `ObserveEffects`, capability vocabulary, adapter-specific evidence, RC2 integration internals and artifact details beyond documented common fields remain experimental. Experimental does not mean arbitrary: versioned formats will not be silently repurposed. Incompatible format changes require a new version and documentation; internal API changes require release notes. Consumers should tolerate additive fields and avoid depending on opaque adapter payloads.
 
+## Execution lifecycle scope
+
+The current In-Flight Revocation scenario does not claim physical interruption of an already-started effect. Revocation of future authority and cancellation of existing execution are separate. An already-started non-interruptible operation may complete while subsequent authority is correctly revoked. This scenario does not establish mid-flight cancellation in RC2, and cancellation is not mandatory for every runtime.
+
+Future integrations may declare stronger lifecycle capabilities such as cancellation, governed checkpoints or rollback. If declared, future harness scenarios may test observed behavior against that declared contract; this is not a promise to implement those features. The distinction remains:
+
+**cancellation requested ≠ cancellation acknowledged ≠ physical effect stopped**
+
+A scenario requiring a lifecycle capability that the integration lacks should be UNSUPPORTED rather than automatically treated as governance failure. A declared capability still needs evidence that observed behavior meets its contract; lack of evidence must not be excused as lack of support.
+
+Authorized execution-boundary size matters: a bounded effect and a long-running batch can create different exposure before another governance boundary is reached. These distinctions do not confer certification or exactly-once guarantees.
+
 ## Suite report version 1
 
 Reports contain `reportVersion`, `runtimeId`, `suiteId`, `results` and `summary`. Each result contains `runtimeId`, `scenarioId`, `scenarioName`, `status`, `missingCapabilities` and `reason`. Optional `diagnostics` entries carry `invariantId`, `reason`, and `case`; optional `artifacts` entries carry `path` and `case`. Summary counts are `passed`, `failed`, `unsupported`. Omitted optional fields mean unavailable, not evidence of success. Case labels describe experiments within one registered scenario.

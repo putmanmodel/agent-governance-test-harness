@@ -8,6 +8,12 @@ CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess ru
 
 The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see [licensing](#licensing) and [participation](CONTRIBUTING.md).
 
+## Developer preview — feedback welcome
+
+This is an active developer preview. The core and current semantics are intentional and working; coverage and the integration surface are expected to evolve. Feedback, criticism, negative findings, missing scenarios, adapter friction, lifecycle gaps, documentation problems and concrete feature requests are welcome. Feedback from integration with real runtimes is particularly valuable.
+
+The harness should test declared runtime contracts, not require every runtime to implement every possible lifecycle capability. An unsupported capability is not automatically a governance failure. External code contributions are not currently solicited; issues, discussion and findings remain welcome.
+
 ## Quick start — portable/default path
 
 After cloning, run these commands from the repository root with Node 24+ and npm. No global TypeScript, build step, Python or CDE/Kingpin checkout is required for this basic path.
@@ -281,3 +287,5 @@ The harness is source-available. Personal/hobby, educational, academic/noncommer
 Ongoing commercial development, CI, production validation and service use after evaluation require a separate commercial license. Independent adapters may be published or sold under their authors' terms without incorporating substantial Harness code. Truthful test publication, including negative findings, is permitted; use implies no certification or endorsement. Redistribution of the Harness itself requires separate written permission.
 
 See [LICENSE](LICENSE) for the governing terms and [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for commercial information. External code contributions are not currently solicited; [issue reports, discussion, independent adapters and findings remain welcome](CONTRIBUTING.md).
+
+Using it on a real runtime? Issues, criticism, integration feedback, missing scenarios, and concrete requests are welcome.
