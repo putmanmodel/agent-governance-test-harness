@@ -63,7 +63,7 @@ Your process must implement the [JSONL subprocess protocol](docs/SUBPROCESS_PROT
 
 CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
 
-The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see [licensing](#licensing) and [participation](CONTRIBUTING.md).
+The current developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see licensing and [participation](CONTRIBUTING.md).
 
 ## Developer preview — feedback welcome
 
