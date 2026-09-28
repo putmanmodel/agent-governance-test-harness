@@ -4,17 +4,7 @@ Adversarial tests for runtime authority across transitions.
 
 A small, framework-neutral TypeScript harness that tests specified authority-transition invariants against observable runtime evidence, with coverage determined by the selected runtime integration and supported scenarios. The harness orchestrates conditions, captures observations and evaluates invariants; the runtime under test owns authority decisions and enforcement.
 
-CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
-
-The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see [licensing](#licensing) and [participation](CONTRIBUTING.md).
-
-## Developer preview — feedback welcome
-
-This is an active developer preview. The core and current semantics are intentional and working; coverage and the integration surface are expected to evolve. Feedback, criticism, negative findings, missing scenarios, adapter friction, lifecycle gaps, documentation problems and concrete feature requests are welcome. Feedback from integration with real runtimes is particularly valuable.
-
-The harness should test declared runtime contracts, not require every runtime to implement every possible lifecycle capability. An unsupported capability is not automatically a governance failure. External code contributions are not currently solicited; issues, discussion and findings remain welcome.
-
-## Quick start — portable/default path
+## Quick start
 
 After cloning, run these commands from the repository root with Node 24+ and npm. No global TypeScript, build step, Python or CDE/Kingpin checkout is required for this basic path.
 
@@ -25,7 +15,7 @@ npm test
 npm run harness -- run --runtime subprocess-reference --suite current
 ```
 
-Expected suite output:
+## Representative suite output
 
 ```text
 Runtime: subprocess-reference
@@ -54,11 +44,32 @@ UNSUPPORTED  UNKNOWN Execution Survives Restart
 1 passed; 0 failed; 7 unsupported (not passed coverage).
 ```
 
-- **PASS:** the selected scenario's assertions passed.
-- **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
-- **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
+UNSUPPORTED means the selected runtime does not declare capabilities required by that scenario; it is not a failed governance test and does not count as passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the eight scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+## Test your own runtime
+
+A developer can implement the documented subprocess protocol, point the harness CLI at their executable, and run applicable governance scenarios without modifying the harness source code.
+
+```bash
+npm run harness -- run \
+  --runtime subprocess \
+  --command python3 \
+  --command-arg /path/to/my-runtime.py \
+  --capability revocation \
+  --suite current
+```
+
+Your process must implement the [JSONL subprocess protocol](docs/SUBPROCESS_PROTOCOL.md); follow the [adapter authoring guide](docs/ADAPTER_AUTHORING.md) to build the bridge. This portable path currently tests only Retry After Revocation, with simulated enforcement and effects.
+
+CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
+
+The planned clone-installed v1.0.0 developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see [licensing](#licensing) and [participation](CONTRIBUTING.md).
+
+## Developer preview — feedback welcome
+
+This is an active developer preview. The core and current semantics are intentional and working; coverage and the integration surface are expected to evolve. Feedback, criticism, negative findings, missing scenarios, adapter friction, lifecycle gaps, documentation problems and concrete feature requests are welcome. Feedback from integration with real runtimes is particularly valuable.
+
+The harness should test declared runtime contracts, not require every runtime to implement every possible lifecycle capability. An unsupported capability is not automatically a governance failure. External code contributions are not currently solicited; issues, discussion and findings remain welcome.
 
 ## AI-assisted setup (optional)
 
@@ -82,9 +93,15 @@ npm run smoke
 
 This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 7 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
 
-[Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64; the hosted workflow still needs its first run. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
+[Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64; hosted GitHub Actions has successfully run on the public repository. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
 
 ## Help, discovery and failure evidence
+
+- **PASS:** the selected scenario's assertions passed.
+- **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
+- **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
+
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the eight scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
 
 ```bash
 npm run harness -- --help             # -h also works; no runtime launch
@@ -101,18 +118,7 @@ Suite JSON uses `reportVersion: "1"`, independent of timeline schema 1 and subpr
 
 Human failure output includes the failed invariant and reason, optional case, and available artifact paths. Setup/protocol exceptions remain scenario FAIL with their error message; invalid CLI usage exits 1 on stderr without a suite report. Subprocess failures include at most the last 2,048 characters of captured stderr when available (including at cleanup); it is not protocol stdout and is not added to PASS reports. Treat stderr as runtime-supplied diagnostics, and keep secrets out of it and timeline evidence.
 
-## Run your own subprocess runtime
-
-A developer can implement the documented subprocess protocol, point the harness CLI at their executable, and run applicable governance scenarios without modifying the harness source code.
-
-```bash
-npm run harness -- run \
-  --runtime subprocess \
-  --command node \
-  --command-arg ./reference-runtime/runtime.mjs \
-  --capability revocation \
-  --suite current
-```
+## External subprocess options
 
 Replace the executable/path with your own process (for example `--command python3 --command-arg ./my-runtime.py`). `subprocess-reference` is the fixed built-in example; `subprocess` is externally configured. Its default report identity is `external-subprocess`; optionally set `--runtime-id my-governance-layer`. Add `--json` for CI, using `npm run --silent harness` to suppress npm's banner.
 
