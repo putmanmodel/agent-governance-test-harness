@@ -1,0 +1,363 @@
+{
+  "description": "Allowlisted extraction of recorded native observations; no credentials, databases, full headers, payloads, or inferred coverage. Source row positions are retained. Event windows alone do not establish observer liveness.",
+  "origins": [
+    {
+      "file": "candidate-a-20261020/governed.jsonl",
+      "sha256": "cb880d4e216a6d79f50207841c75c88292dfc99753d08d1ac4dfbd29148cd6b1"
+    },
+    {
+      "file": "candidate-a-20261020/results.json",
+      "sha256": "43a0b128d28b0ce2d09df18c66133107e5904ef95e110352ae676346387ab2c7"
+    },
+    {
+      "file": "candidate-b-20261020/events.jsonl",
+      "sha256": "2a38f3e50eb1da41f0f35c9a3c731cf38f962b0ecc41913cbc2cd0f4f537b0ab"
+    },
+    {
+      "file": "candidate-b-20261020/results.json",
+      "sha256": "3f5777b7344d167cdf1bc998008f42e997a0949ddf808b9ddfa44566dbb860f2"
+    },
+    {
+      "file": "candidate-b-20261020/control.jsonl",
+      "sha256": "ef0ff52ec2f3d5859db67c6939f2de7f2ed5e6cf3455d70cb6f613601bd2d4b2"
+    }
+  ],
+  "a": [
+    {
+      "result_index": 0,
+      "case": "allow",
+      "event_start": 6,
+      "event_end": 12,
+      "status": 200,
+      "request": {
+        "governance_line": 10,
+        "authenticated_line": 7,
+        "authenticated_request_id": "80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "e3dd7916-d970-48ab-b88a-d18e42bf4c4f",
+        "outcome": "allow",
+        "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+        "arguments_hash": "d4734820f429598dd215ec9f669bd111b91455c01e928f98cdd05a96758bc5bc",
+        "workload_claims": [
+          "x-kp-request-id=allow"
+        ]
+      },
+      "receiver": [
+        {
+          "journal_line": 12,
+          "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+          "effect_count": 1
+        }
+      ]
+    },
+    {
+      "result_index": 1,
+      "case": "fake-claims",
+      "event_start": 12,
+      "event_end": 18,
+      "status": 200,
+      "request": {
+        "governance_line": 16,
+        "authenticated_line": 13,
+        "authenticated_request_id": "881eb3f9-53f5-4b49-a420-766dff7cf10c",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "881eb3f9-53f5-4b49-a420-766dff7cf10c",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "80864797-ada9-46ec-9eff-d86c72dcd512",
+        "outcome": "allow",
+        "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+        "arguments_hash": "a7a642e42afedd08aa42abf0e9fe5c6d635007d1bdda80759ce9df89e3cd92ce",
+        "workload_claims": [
+          "x-kp-request-id=80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+          "x-sandbox-id=workload-fake",
+          "x-kingpin-principal=admin",
+          "x-action=fs.read"
+        ]
+      },
+      "receiver": [
+        {
+          "journal_line": 18,
+          "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+          "effect_count": 2
+        }
+      ]
+    },
+    {
+      "result_index": 2,
+      "case": "mutation-method",
+      "event_start": 18,
+      "event_end": 23,
+      "status": 403,
+      "request": {
+        "governance_line": 22,
+        "authenticated_line": 19,
+        "authenticated_request_id": "91e79ae6-6976-413c-92f1-e9f8612cc1fa",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "91e79ae6-6976-413c-92f1-e9f8612cc1fa",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "c734804f-c1ee-480e-a548-53070036e4db",
+        "outcome": "deny",
+        "operation_sha256": "b8143bff05663f033255ca8ccd70a6dcceed413a4c4733904313b1807ae8b263",
+        "arguments_hash": "f01da3c4bd67c41991045ebd7f7f6408d375d5d7414286563a6a8d0915200f14",
+        "workload_claims": [
+          "x-kp-request-id=80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+          "x-sandbox-id=workload-fake",
+          "x-kingpin-principal=admin",
+          "x-action=fs.read"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 3,
+      "case": "mutation-path",
+      "event_start": 23,
+      "event_end": 28,
+      "status": 403,
+      "request": {
+        "governance_line": 27,
+        "authenticated_line": 24,
+        "authenticated_request_id": "1c8d53fc-6bfd-4747-81f3-5aba774d8012",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "1c8d53fc-6bfd-4747-81f3-5aba774d8012",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "81a704c8-c838-49ea-a24a-cf47ffc975cc",
+        "outcome": "deny",
+        "operation_sha256": "92922ae5f0a8351b169a8f1da3d645f7d83e14e63afdd3819917e6c2500d015b",
+        "arguments_hash": "8f793f5302e3a4c908b2f712c99fa6acdab6015159d0f1624b4f4854c19f6e07",
+        "workload_claims": [
+          "x-kp-request-id=80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+          "x-sandbox-id=workload-fake",
+          "x-kingpin-principal=admin",
+          "x-action=fs.read"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 4,
+      "case": "mutation-query",
+      "event_start": 28,
+      "event_end": 33,
+      "status": 403,
+      "request": {
+        "governance_line": 32,
+        "authenticated_line": 29,
+        "authenticated_request_id": "38555216-37e1-493d-8b6f-6c6176b0a9c7",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "38555216-37e1-493d-8b6f-6c6176b0a9c7",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "5eafadd0-7b1c-4400-88cf-603b8c02ed89",
+        "outcome": "deny",
+        "operation_sha256": "252059f71c942c8df1fb2e821bd116e7d186793685a04798e6c645916953775d",
+        "arguments_hash": "866b838c2b8e6b37da61c3972126cc59762cc09ed063dce199f66db9e0e92adf",
+        "workload_claims": [
+          "x-kp-request-id=80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+          "x-sandbox-id=workload-fake",
+          "x-kingpin-principal=admin",
+          "x-action=fs.read"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 5,
+      "case": "mutation-headers",
+      "event_start": 33,
+      "event_end": 38,
+      "status": 403,
+      "request": {
+        "governance_line": 37,
+        "authenticated_line": 34,
+        "authenticated_request_id": "92af60fe-bf82-4d44-9191-ebf9bad1de65",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "92af60fe-bf82-4d44-9191-ebf9bad1de65",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "f1c5a4ca-67bb-4722-b8d3-c70dcda6e83a",
+        "outcome": "deny",
+        "operation_sha256": "afff1f65026d81bff3df6d7802010fa9b46eb21697b790d49affd34badba280e",
+        "arguments_hash": "a95e6e0f554c5179986767bfea7d0717502f03f90b6a3d15dd09a9b686440435",
+        "workload_claims": [
+          "x-kp-request-id=80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+          "x-sandbox-id=workload-fake",
+          "x-kingpin-principal=admin",
+          "x-action=fs.read"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 6,
+      "case": "mutation-body",
+      "event_start": 38,
+      "event_end": 43,
+      "status": 403,
+      "request": {
+        "governance_line": 42,
+        "authenticated_line": 39,
+        "authenticated_request_id": "434d9932-e555-42d4-911a-f61dc8e4fb46",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "434d9932-e555-42d4-911a-f61dc8e4fb46",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "9c4e7bb2-eb1b-4738-8ea0-48e33f90307d",
+        "outcome": "deny",
+        "operation_sha256": "9689fd235fbc0a7ad5ca47bdd4112a39d94d7570676f361537af985c28376b8b",
+        "arguments_hash": "071e0f7251a571fe7a0b8fc7b885e34410252b7f069e85cf1a2d1f60e4e6aeb5",
+        "workload_claims": [
+          "x-kp-request-id=80ffd7a3-c66f-47ad-b821-6ca34dc9a232",
+          "x-sandbox-id=workload-fake",
+          "x-kingpin-principal=admin",
+          "x-action=fs.read"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 7,
+      "case": "missing-evidence",
+      "event_start": 43,
+      "event_end": 48,
+      "status": 403,
+      "request": {
+        "governance_line": 47,
+        "authenticated_line": 44,
+        "authenticated_request_id": "bc8bfc72-93f9-4276-8cd1-b27c85e2e951",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "bc8bfc72-93f9-4276-8cd1-b27c85e2e951",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "eb665c1c-4ab4-4447-bcab-0d0389f74447",
+        "outcome": "constrain",
+        "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+        "arguments_hash": "56b9672cc495c232cf8713dfd2d4252df9087e4ee70cffc6a80854f5cbe79c43",
+        "workload_claims": [
+          "x-kp-request-id=missing-evidence"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 8,
+      "case": "review",
+      "event_start": 48,
+      "event_end": 53,
+      "status": 403,
+      "request": {
+        "governance_line": 52,
+        "authenticated_line": 49,
+        "authenticated_request_id": "3b7a8b34-9fb9-43e2-9e9f-9ddb3a9eb7cb",
+        "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+        "request_id": "3b7a8b34-9fb9-43e2-9e9f-9ddb3a9eb7cb",
+        "mapped_principal": "binding-agent",
+        "authority_principal": "binding-agent",
+        "decision_id": "2477dc20-a6a3-4669-8b50-4ff39269dbf1",
+        "outcome": "human_review",
+        "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+        "arguments_hash": "485a16444df69711a4844ec002b38fe0c0bdf8849e42eac5b405ee54e8eca790",
+        "workload_claims": [
+          "x-kp-request-id=review"
+        ]
+      },
+      "receiver": []
+    },
+    {
+      "result_index": 9,
+      "case": "malformed-governance",
+      "event_start": 53,
+      "event_end": 57,
+      "status": 403,
+      "request": null,
+      "receiver": []
+    },
+    {
+      "result_index": 10,
+      "case": "governance-timeout",
+      "event_start": 57,
+      "event_end": 61,
+      "status": 403,
+      "request": null,
+      "receiver": []
+    },
+    {
+      "result_index": 11,
+      "case": "governance-unavailable",
+      "event_start": 61,
+      "event_end": 65,
+      "status": 403,
+      "request": null,
+      "receiver": []
+    },
+    {
+      "result_index": 12,
+      "case": "middleware-unavailable",
+      "event_start": 66,
+      "event_end": 66,
+      "status": 403,
+      "request": null,
+      "receiver": []
+    }
+  ],
+  "b": {
+    "original": {
+      "governance_line": 7,
+      "authenticated_line": 3,
+      "authenticated_request_id": "48cf4916-b89a-4fbd-9783-8d0eada6c662",
+      "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+      "request_id": "48cf4916-b89a-4fbd-9783-8d0eada6c662",
+      "mapped_principal": "binding-agent",
+      "authority_principal": "binding-agent",
+      "decision_id": "7b7e6fb8-468c-4217-8b59-f04fbe656dde",
+      "outcome": "human_review",
+      "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+      "arguments_hash": "778542b171dd54e1f300ac416cc8a6464e513b16cf7a3ccc6c68920dfb9de68b",
+      "workload_claims": []
+    },
+    "fresh": {
+      "governance_line": 13,
+      "authenticated_line": 9,
+      "authenticated_request_id": "855881ca-7f47-4e88-9a5b-7b9b774ba4ef",
+      "authenticated_subject": "spiffe://openshell/sandbox/010dc369-f24a-437c-b194-15b7a9d4e012",
+      "request_id": "855881ca-7f47-4e88-9a5b-7b9b774ba4ef",
+      "mapped_principal": "binding-agent",
+      "authority_principal": "binding-agent",
+      "decision_id": "1ef2b677-b9d2-48f1-9d28-cde64ce6b315",
+      "outcome": "human_review",
+      "operation_sha256": "b56a88ddcdb043589f6369c06c9bbb60807b85c882a426c9a082d2d26241fb06",
+      "arguments_hash": "185287ed2b239af6cff41365d8cb0366e60284c6f714fbdc03cba9c4b2b2ce08",
+      "workload_claims": [
+        "x-review-id=d27aeda1-f423-452e-83a7-ee52689ee508",
+        "x-kp-request-id=48cf4916-b89a-4fbd-9783-8d0eada6c662",
+        "x-sandbox-id=fake",
+        "x-kingpin-principal=reviewer-b"
+      ]
+    },
+    "response_reason": "kingpin_review_required",
+    "response_status": 403,
+    "inspection": {
+      "result_index": 7,
+      "review_id": "d27aeda1-f423-452e-83a7-ee52689ee508",
+      "request_id": "48cf4916-b89a-4fbd-9783-8d0eada6c662",
+      "original_outcome": "human_review",
+      "status": "approved",
+      "resolution": "approve",
+      "consumed_at": null,
+      "arguments_hash": "778542b171dd54e1f300ac416cc8a6464e513b16cf7a3ccc6c68920dfb9de68b"
+    },
+    "consumption": {
+      "control_line": 6,
+      "reviewId": "d27aeda1-f423-452e-83a7-ee52689ee508",
+      "requestId": "855881ca-7f47-4e88-9a5b-7b9b774ba4ef",
+      "execution_authorized": false,
+      "reason": "REQUEST_BINDING_CHANGED"
+    }
+  }
+}

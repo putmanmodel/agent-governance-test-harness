@@ -61,7 +61,14 @@ npm run harness -- run \
 
 Your process must implement the [JSONL subprocess protocol](docs/SUBPROCESS_PROTOCOL.md); follow the [adapter authoring guide](docs/ADAPTER_AUTHORING.md) to build the bridge. This portable path currently tests only Retry After Revocation, with simulated enforcement and effects.
 
-CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. Requires Node 24+; zero runtime dependencies. TypeScript and Node declarations are development dependencies. No UI, LLM or agent framework is required.
+CDE/Kingpin RC2 is one supported integration. An independent JSONL subprocess runtime demonstrates portability without CDE/Kingpin. The core Harness requires Node 24+ and has no runtime dependencies. Development dependencies include TypeScript, Node declarations and the pinned OpenAI Agents SDK used by the SDK example and full test suite. Core scenarios require no UI, LLM or agent framework; the SDK tests use scripted local inference without paid model calls.
+
+An opt-in [recorded external-substrate assessment](docs/RECORDED_ASSESSMENT.md) evaluates supplied evidence separately from live scenario runs. The bundled Candidate A/B recorded assessments remain UNVERIFIED where full independent observation coverage is not established; they do not inherit the experiments’ reported PASS.
+
+Two opt-in examples capture real execution and independent receiver effects for that assessor:
+
+- [OpenAI Agents SDK](examples/openai-agents-sdk/README.md): actual SDK tool execution with a constructed application-owned authorization policy, approved/denied cases, and a duplicate-dispatch control. This is not independent governance-system qualification.
+- [OpenCode native permissions](examples/opencode-qualification/README.md): the unmodified application’s permission workflow with scripted local inference. In the locally verified run, bounded permission/effect findings PASS, while workload identity and aggregate assessments remain UNVERIFIED. Its synthetic prohibited-effect FAIL is an evaluator control, not an OpenCode vulnerability.
 
 The current developer preview has an explicit [stability and release contract](docs/V1_DEVELOPER_PREVIEW.md) and [timeline schema reference](docs/TIMELINE_SCHEMA.md). This is a source-available project; see licensing and [participation](CONTRIBUTING.md).
 

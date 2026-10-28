@@ -1,0 +1,205 @@
+{
+  "evidenceVersion": "1",
+  "runId": "synthetic-independent-vocabulary",
+  "runtime": "Synthetic PermitDesk",
+  "configuration": "Fixture only: isolated serialized operation windows",
+  "sources": [
+    {
+      "id": "runtime",
+      "location": "synthetic:runtime",
+      "kind": "primary",
+      "description": "Constructed test evidence, not a live independent implementation"
+    },
+    {
+      "id": "observer",
+      "location": "synthetic:observer",
+      "kind": "primary",
+      "description": "Constructed test evidence, not a live independent implementation"
+    }
+  ],
+  "limitations": [
+    "Synthetic fixture demonstrates assertion neutrality only; not external implementation validation."
+  ],
+  "cases": [
+    {
+      "id": "permit",
+      "family": "bounded-correspondence",
+      "contract": {
+        "description": "Permit applies to exactly the observed operation binding.",
+        "expectedEffect": "matched",
+        "bindingRepresentation": "fixture canonical operation v1"
+      },
+      "applicability": {
+        "supported": true,
+        "reason": "Fixture supplies operation observations."
+      },
+      "requestId": "r2",
+      "authority": {
+        "value": {
+          "nativeOutcome": "TICKET_ISSUED",
+          "decisionId": "d2",
+          "binding": "operation-2",
+          "requestId": "r2",
+          "effectAuthorized": true
+        },
+        "sources": [
+          "runtime"
+        ]
+      },
+      "enforcement": {
+        "value": {
+          "disposition": "allow",
+          "reason": "admitted"
+        },
+        "sources": [
+          "runtime"
+        ]
+      },
+      "identity": {
+        "value": {
+          "authenticatedPrincipal": "service-7",
+          "authorityPrincipal": "service-7",
+          "authenticatedRequestId": "r2",
+          "workloadClaims": [
+            "principal=admin",
+            "request=r1"
+          ]
+        },
+        "sources": [
+          "runtime"
+        ]
+      },
+      "effects": {
+        "value": [
+          {
+            "requestId": "r2",
+            "binding": "operation-2"
+          }
+        ],
+        "sources": [
+          "observer"
+        ]
+      },
+      "coverage": {
+        "value": {
+          "observer": "independent fixture counter",
+          "independent": true,
+          "availableThroughout": true,
+          "start": 10,
+          "end": 20,
+          "actionTime": 15,
+          "scope": "one isolated operation; no concurrent requests",
+          "correlation": "serialized observation window and independent canonical operation binding",
+          "requestIds": [
+            "r2"
+          ],
+          "baseline": 0,
+          "final": 1
+        },
+        "sources": [
+          "observer"
+        ]
+      },
+      "limitations": [
+        "Bounded fixture window only."
+      ]
+    },
+    {
+      "id": "review",
+      "family": "review-binary-enforcement",
+      "contract": {
+        "description": "Hold remains inspectable; old ticket cannot authorize a distinct fresh request binding.",
+        "expectedEffect": "none",
+        "bindingRepresentation": "fixture canonical operation v1"
+      },
+      "applicability": {
+        "supported": true,
+        "reason": "Fixture supplies operation observations."
+      },
+      "requestId": "r2",
+      "authority": {
+        "value": {
+          "nativeOutcome": "OPERATOR_HOLD",
+          "decisionId": "d2",
+          "binding": "binding-2",
+          "requestId": "r2",
+          "effectAuthorized": false
+        },
+        "sources": [
+          "runtime"
+        ]
+      },
+      "enforcement": {
+        "value": {
+          "disposition": "block",
+          "reason": "ticket-required"
+        },
+        "sources": [
+          "runtime"
+        ]
+      },
+      "identity": {
+        "value": {
+          "authenticatedPrincipal": "service-7",
+          "authorityPrincipal": "service-7",
+          "authenticatedRequestId": "r2",
+          "workloadClaims": [
+            "principal=admin",
+            "request=r1"
+          ]
+        },
+        "sources": [
+          "runtime"
+        ]
+      },
+      "effects": {
+        "value": [],
+        "sources": [
+          "observer"
+        ]
+      },
+      "coverage": {
+        "value": {
+          "observer": "independent fixture counter",
+          "independent": true,
+          "availableThroughout": true,
+          "start": 10,
+          "end": 20,
+          "actionTime": 15,
+          "scope": "one isolated operation; no concurrent requests",
+          "correlation": "serialized observation window and independent canonical operation binding",
+          "requestIds": [
+            "r2"
+          ],
+          "baseline": 0,
+          "final": 0
+        },
+        "sources": [
+          "observer"
+        ]
+      },
+      "limitations": [
+        "Bounded fixture window only."
+      ],
+      "review": {
+        "value": {
+          "nativeState": "OPERATOR_HOLD",
+          "durableState": "OPERATOR_HOLD",
+          "visibleReason": "ticket-required",
+          "originalRequestId": "r1",
+          "freshRequestId": "r2",
+          "originalBinding": "binding-1",
+          "freshBinding": "binding-2",
+          "approvedBinding": "binding-1",
+          "attemptedApprovalBinding": "binding-1",
+          "approvalSourceRequestId": "r1",
+          "freshExecutionAuthorized": false,
+          "originalDecisionId": "d1"
+        },
+        "sources": [
+          "runtime"
+        ]
+      }
+    }
+  ]
+}

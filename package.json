@@ -22,9 +22,13 @@
     "scenario:restart": "node src/adapters/kingpin-rc2/restart-main.ts",
     "scenario:review-restart": "node src/adapters/kingpin-rc2/review-restart-main.ts",
     "scenario:unknown-restart": "node src/adapters/kingpin-rc2/unknown-restart-main.ts",
-    "smoke": "node scripts/release-smoke.mjs"
+    "smoke": "node scripts/release-smoke.mjs",
+    "assess:recorded": "node src/recorded-assessment/cli.ts",
+    "demo:agents-sdk": "node examples/openai-agents-sdk/run.ts",
+    "test:agents-sdk": "node --test tests/openai-agents-sdk.test.ts"
   },
   "devDependencies": {
+    "@openai/agents": "0.21.0",
     "@types/node": "^24.13.6",
     "typescript": "~5.9.3"
   },
