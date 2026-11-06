@@ -58,6 +58,18 @@ The hardening validation recorded:
 
 These are validation results for the completed qualification tranche, not a claim that every supported runtime or environment was tested.
 
+### Clean publication-branch reproduction
+
+The qualification commits were also replayed independently onto the then-current public `origin/main` without the separate recorded-assessment tranche. In that isolated worktree:
+
+- 215/215 unit tests passed;
+- 12/12 connected integration tests passed with `RC2_ROOT` explicitly pointing to the qualified Kingpin/Gateway checkout;
+- `approved-review-revocation-survives-restart` reproduced its PASS directly;
+- typecheck passed after installing the lockfile-defined development dependencies;
+- release smoke passed on its available static/unconnected checks.
+
+The lower unit-test count reflects the intentionally smaller public-main test surface and does not replace or reinterpret the retained 371/371 qualification run.
+
 ## Provenance
 
 The retained run recorded:
