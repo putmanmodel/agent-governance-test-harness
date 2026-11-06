@@ -33,4 +33,8 @@ export const unknownRestartRegistration: ScenarioRegistration = {
   id: 'unknown-execution-survives-restart', name: 'UNKNOWN Execution Survives Restart',
   requires: ['execution-accounting', 'durable-restart', 'reconciliation'],
 };
-export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration, reviewRestartRegistration, unknownRestartRegistration] as const;
+export const approvedRestartRegistration: ScenarioRegistration = {
+  id: 'approved-review-revocation-survives-restart', name: 'Approved Review Revocation Survives Restart',
+  requires: ['human-review', 'revocation', 'execution-accounting', 'durable-restart'],
+};
+export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration, reviewRestartRegistration, unknownRestartRegistration, approvedRestartRegistration] as const;

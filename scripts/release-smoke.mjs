@@ -21,8 +21,8 @@ function checkReport(report, runtimeId) {
   assert.equal(report.reportVersion, '1');
   assert.equal(report.runtimeId, runtimeId);
   assert.equal(report.suiteId, 'current');
-  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 7 });
-  assert.equal(report.results.length, 8);
+  assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 8 });
+  assert.equal(report.results.length, 9);
   assert.equal(report.results[0].scenarioId, 'retry-after-revocation');
   assert.equal(report.results[0].status, 'PASS');
   assert.ok(report.results.slice(1).every(r => r.status === 'UNSUPPORTED' && r.missingCapabilities.length));
@@ -33,9 +33,9 @@ try {
   assert.match(cli(['capabilities']), /durable-restart/);
   console.log('PASS help and static discovery (RC2 unavailable)');
   const base = ['run', '--suite', 'current'];
-  assert.match(cli([...base, '--runtime', 'subprocess-reference']), /1 passed; 0 failed; 7 unsupported/);
+  assert.match(cli([...base, '--runtime', 'subprocess-reference']), /1 passed; 0 failed; 8 unsupported/);
   checkReport(JSON.parse(cli([...base, '--runtime', 'subprocess-reference', '--json'])), 'subprocess-reference');
-  console.log('PASS subprocess-reference: 1 PASS / 7 UNSUPPORTED; report version 1');
+  console.log('PASS subprocess-reference: 1 PASS / 8 UNSUPPORTED; report version 1');
   const report = JSON.parse(cli([...base, '--runtime', 'subprocess', '--command', 'python3',
     '--command-arg', 'examples/python-governance-runtime.py', '--capability', 'revocation',
     '--runtime-id', 'python-example', '--json', '--artifact-dir', temporary]));
@@ -49,5 +49,5 @@ try {
   assert.notEqual(decisions[0].decision_id, decisions[1].decision_id);
   const controls = timeline.filter(r => r.category === 'governance').at(-1).data.evidence.subprocess.controls;
   assert.deepEqual(controls.map(c => [c.type, c.applied]), [['GRANT', true], ['REVOKE', true]]);
-  console.log('PASS Python external CLI: 1 PASS / 7 UNSUPPORTED; protocol/report/timeline versions 1');
+  console.log('PASS Python external CLI: 1 PASS / 8 UNSUPPORTED; protocol/report/timeline versions 1');
 } finally { rmSync(temporary, { recursive: true, force: true }); }

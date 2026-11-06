@@ -46,6 +46,7 @@ export const runtimeProfiles: Readonly<Record<string, RuntimeProfile>> = {
         const family = await (await import('./adapters/kingpin-rc2/unknown-restart.ts')).runUnknownRestartFamily();
         return { passed: family.passed, cases: { 'after-effect': family.cases.afterEffect, 'before-effect': family.cases.beforeEffect } };
       },
+      'approved-review-revocation-survives-restart': async () => (await import('./adapters/kingpin-rc2/approved-restart.ts')).runApprovedRestart(),
       'human-approval-consumption-survives-restart': async () => (await import('./adapters/kingpin-rc2/review-restart.ts')).runReviewRestart(),
       'capability-revocation-survives-restart': async () => (await import('./adapters/kingpin-rc2/restart.ts')).runRestart(),
       'staged-write-after-revocation': async () => (await import('./adapters/kingpin-rc2/staged.ts')).runStagedWrite(),

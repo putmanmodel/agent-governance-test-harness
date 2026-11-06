@@ -41,7 +41,10 @@ UNSUPPORTED  Human Approval Consumption Survives Restart
 UNSUPPORTED  UNKNOWN Execution Survives Restart
              missing: execution-accounting, durable-restart, reconciliation
 
-1 passed; 0 failed; 7 unsupported (not passed coverage).
+UNSUPPORTED  Approved Review Revocation Survives Restart
+             missing: human-review, execution-accounting, durable-restart
+
+1 passed; 0 failed; 8 unsupported (not passed coverage).
 ```
 
 UNSUPPORTED means the selected runtime does not declare capabilities required by that scenario; it is not a failed governance test and does not count as passed coverage.
@@ -91,7 +94,7 @@ With Python 3 available as `python3` (standard library only, no pip install):
 npm run smoke
 ```
 
-This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 7 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
+This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 8 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
 
 [Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64; hosted GitHub Actions has successfully run on the public repository. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
 
@@ -101,7 +104,7 @@ This checks help/discovery, built-in portable human/JSON output and the [checked
 - **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the eight scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the nine scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
 
 ```bash
 npm run harness -- --help             # -h also works; no runtime launch
@@ -194,6 +197,7 @@ Existing individual commands remain available:
 | `npm run scenario:in-flight` | `in-flight-revocation.rc2-gateway.jsonl` |
 | `npm run scenario:staged` | `staged-write-after-revocation.rc2-gateway.jsonl` |
 | `npm run scenario:restart` | `capability-revocation-survives-restart.rc2-gateway.jsonl` |
+| `npm run scenario:approved-restart` | `approved-review-revocation-survives-restart.rc2-gateway.jsonl` |
 | `npm run scenario:review-restart` | `human-approval-consumption-survives-restart.rc2-gateway.jsonl` |
 | `npm run scenario:unknown-restart` | Both `unknown-execution-survives-restart.rc2-gateway.jsonl` and `unknown-execution-before-effect-survives-restart.rc2-gateway.jsonl` |
 
@@ -261,13 +265,13 @@ The invariant requires native staging success, target absence throughout, correl
 
 Run `npm run scenario:restart` for `artifacts/capability-revocation-survives-restart.rc2-gateway.jsonl`. Process A completes a real bounded write, acknowledges write-capability revocation, and closes its Gateway, CDE worker and database before exiting. Only after observing A's exit does the harness start distinct Process B, which reopens the existing SQLite database (`create: false`) and sandbox. Stable principal/context and policy metadata, database/sandbox identity, preserved audit prefix and stored capability revocation prove continuity. B performs fresh CDE/Kingpin evaluation, receives denial, and leaves the complete ledger and target file unchanged. Final cleanup removes the fixture.
 
-This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 7 UNSUPPORTED.
+This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 8 UNSUPPORTED.
 
 ## Human Approval Consumption Survives Restart
 
 Run `npm run scenario:review-restart` for `artifacts/human-approval-consumption-survives-restart.rc2-gateway.jsonl`. Real CDE produces HUMAN REVIEW; an authenticated reviewer approves it and the original agent consumes it once for a bounded write. Process A closes and exits before distinct Process B reopens the same database and sandbox. B directly replays `/reviews/<original-consumed-id>/execute` with the identical bound body and governed identity. RC2 returns 409; consumed review/history, execution accounting and file state remain unchanged.
 
-No fresh post-restart CDE or Kingpin decision is expected or invented. The outer timeline records the original consumption ALLOW and real execution; the initial hold/approval, process order, and later native refusal are retained in adapter evidence as one compound experiment. The invariant tests durable one-use state, not fresh-request evaluation or concurrent consumption. Existing `human-review`, `execution-accounting`, and `durable-restart` capabilities suffice. The current suite now has eight scenarios: RC2 Gateway 8 PASS; subprocess profiles with revocation only 1 PASS / 7 UNSUPPORTED.
+No fresh post-restart CDE or Kingpin decision is expected or invented. The outer timeline records the original consumption ALLOW and real execution; the initial hold/approval, process order, and later native refusal are retained in adapter evidence as one compound experiment. The invariant tests durable one-use state, not fresh-request evaluation or concurrent consumption. Existing `human-review`, `execution-accounting`, and `durable-restart` capabilities suffice. The current suite now has nine scenarios: RC2 Gateway 9 PASS; subprocess profiles with revocation only 1 PASS / 8 UNSUPPORTED.
 
 ## UNKNOWN Execution Survives Restart
 
@@ -282,7 +286,7 @@ Both cases inspect committed state outside A before and after death. Only after 
 
 The durable **harness-labelled** `execute` journal entry means entry into the harness wrapper, not completion of the underlying executor or physical write. A records one wrapper entry in each case; parent snapshots establish zero physical effects in the before case and one completed write in the after case. B records zero execute entries and one native sandbox reconciliation. Native ledger/audit and unchanged file evidence corroborate no redispatch. Reconciliation inspects evidence; retry/re-execution performs the operation again. UNKNOWN is not retry authority.
 
-The common CLI reports one UNKNOWN-family PASS only when both experiments pass: Gateway remains 8 PASS; subprocess profiles remain 1 PASS / 7 UNSUPPORTED. Existing `execution-accounting`, `durable-restart`, and `reconciliation` capabilities suffice. This POSIX SIGKILL/flock driver tests specific crash semantics; `durable-restart` alone does not promise all crash behavior. Generic core and timeline schema remain unchanged (version 1). Direct commands refresh their respective artifacts; native IDs/PIDs/timestamps are not deterministic.
+The common CLI reports one UNKNOWN-family PASS only when both experiments pass: Gateway remains 9 PASS; subprocess profiles remain 1 PASS / 8 UNSUPPORTED. Existing `execution-accounting`, `durable-restart`, and `reconciliation` capabilities suffice. This POSIX SIGKILL/flock driver tests specific crash semantics; `durable-restart` alone does not promise all crash behavior. Generic core and timeline schema remain unchanged (version 1). Direct commands refresh their respective artifacts; native IDs/PIDs/timestamps are not deterministic.
 
 ## Licensing
 
@@ -295,3 +299,19 @@ Ongoing commercial development, CI, production validation and service use after 
 See [LICENSE](LICENSE) for the governing terms and [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for commercial information. External code contributions are not currently solicited; [issue reports, discussion, independent adapters and findings remain welcome](CONTRIBUTING.md).
 
 Using it on a real runtime? Issues, criticism, integration feedback, missing scenarios, and concrete requests are welcome.
+
+## Approved review revocation across graceful restart
+
+Run `npm run scenario:approved-restart` for `approved-review-revocation-survives-restart.rc2-gateway.jsonl`. A obtains a real HUMAN REVIEW and authenticated approval (`ready_for_consumption: true`, `execution_authorized: false`), then revokes the matching `fs.write` capability without a lease token. After A closes and exits, B reopens the same SQLite database and sandbox with `create: false` and presents the identical bound request to the original review's `/execute` endpoint.
+
+The qualification requires HTTP 403 / `CAPABILITY_REVOKED`, review invalidation preserving historical approval, and null consumption. The original HUMAN REVIEW remains the sole native decision (`INDETERMINATE`); failed consumption and original/fresh-request audit correlations remain compound evidence. No fresh native DENY or enforcement-denied event is invented. Review state and audit may change, while the complete execution ledger stays empty, no execution authorization/consumption/lifecycle events occur, the harness-owned adapter-entry journal stays empty, and independent target inspection remains absent through B's exit. Zero-effect coverage is limited to this bounded sandbox operation and observation window.
+
+This ninth case requires `human-review`, `revocation`, `execution-accounting`, and `durable-restart`. It covers graceful replacement only, not crash recovery or lease revocation.
+
+Qualification hardening for this case recomputes the Kingpin request binding and checks it against the exact bounded fixture, requires the original HUMAN REVIEW audit decision, validates evidence containers, and permits exactly one correlated `NOT_STARTED` Harness execution record. The live child also invokes the loaded native review, audit, execution-record and transition validators. The portable verifier uses matching binding semantics, with native parity checked by integration testing; it does not import a Kingpin checkout for recorded unit tests.
+
+The named `zero_ledger`, `zero_execution_events`, `zero_adapter_calls`, and `zero_filesystem_effect` predicates have coherent mutation tests. Each mutation preserves duplicated snapshots and fails exactly its named predicate; omitting that predicate makes the same mutation pass. Observer readiness is durably journaled separately from execute entries for both process lifetimes. Missing observer journals fail capture rather than becoming empty observations.
+
+The direct command also writes `approved-review-revocation-survives-restart.rc2-gateway.provenance.json`. It binds the final JSONL SHA-256 to run-time Harness/source commits and changed-file lists, source/resource inventories, installed Gateway dependency files, Node/platform/SQLite identity, Python interpreter identity and distribution versions, and the resolved runtime root. Each child captures the runtime inventory before loading native modules and after shutdown; qualification requires these inventories to agree. The inventory is a superset of relevant files, not an execution trace or cryptographic attestation. The sidecar avoids a circular artifact self-hash. Older evidence lacking these fields does not qualify under the hardened verifier.
+
+`kingpin-rc2` and `.rc2-gateway.jsonl` retain historical controlled-evaluator adapter naming. This driver loads **repository source**, not an installed npm SDK. When the retained public `kingpin-runtime@0.1.0-rc.3` archive is available, its pinned archive digest and 17 JS/SQL/default-policy file hashes are compared to the loaded source inventory and retained in provenance. An absent or different archive does not establish SDK equivalence; naming never establishes it. SDK component equivalence does not qualify the standalone npm package, the complete public deployment environment, or other authority/restart combinations.

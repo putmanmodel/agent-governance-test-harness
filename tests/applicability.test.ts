@@ -33,10 +33,10 @@ test('explicit caller requirements cannot be opted out by omitting a declaration
   assert.match(result.reason, /explicit caller/);
 });
 
-test('subprocess suite runs only retry and reports seven unsupported scenarios', async () => {
+test('subprocess suite runs only retry and reports eight unsupported scenarios', async () => {
   const results = await runSubprocessSuite();
-  assert.deepEqual(results.map(r => r.status), ['PASS', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED']);
-  assert.deepEqual(summarizeApplicability(results), { passed: 1, failed: 0, unsupported: 7 });
+  assert.deepEqual(results.map(r => r.status), ['PASS', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED', 'UNSUPPORTED']);
+  assert.deepEqual(summarizeApplicability(results), { passed: 1, failed: 0, unsupported: 8 });
 });
 
 test('RC2 declarations cover actual governance and Gateway paths', () => {

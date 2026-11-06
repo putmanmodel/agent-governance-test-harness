@@ -42,7 +42,7 @@ test('paired failures and separate artifact paths survive human/JSON reporting w
     const report = await runSuite({runtime:{id:'fixture',capabilities:['revocation']},drivers:{
       'retry-after-revocation':async()=>({passed:false,cases:{'after-effect':source,'before-effect':{...source,passed:false,assertions:[failure]}}}),
     }},getSuite('current'),{artifactDir:dir});
-    assert.equal(report.reportVersion,'1'); assert.deepEqual(report.summary,{passed:0,failed:1,unsupported:7});
+    assert.equal(report.reportVersion,'1'); assert.deepEqual(report.summary,{passed:0,failed:1,unsupported:8});
     const r = report.results[0];
     assert.deepEqual(r.diagnostics,[{invariantId:failure.invariantId,reason:failure.reason,case:'before-effect'}]);
     assert.equal(r.artifacts?.length,2);
@@ -89,5 +89,5 @@ for (const mode of ['timeout','exit','malformed','correlation']) test(`bounded s
 test('PASS does not expose child stderr', async () => {
   const r=await cli(['run','--runtime','subprocess','--suite','current','--command',process.execPath,'--command-arg=-e','--command-arg',"console.error('private diagnostic');import('./reference-runtime/runtime.mjs')",'--capability','revocation','--json']);
   assert.equal(r.code,0); assert.ok(!r.out[0].includes('private diagnostic'));
-  assert.deepEqual(JSON.parse(r.out[0]).summary,{passed:1,failed:0,unsupported:7});
+  assert.deepEqual(JSON.parse(r.out[0]).summary,{passed:1,failed:0,unsupported:8});
 });
