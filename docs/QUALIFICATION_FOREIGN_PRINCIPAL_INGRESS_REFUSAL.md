@@ -52,6 +52,18 @@ Harness collection sequence numbers place the initial ledger, observer and direc
 | Diff and whitespace checks | Passed |
 | Artifact checksum verification | Passed |
 
+### Clean publication-branch reproduction
+
+The qualification commits were also replayed independently onto the then-current public `origin/main`, without the separate recorded-assessment tranche. In that isolated worktree:
+
+- 362/362 unit tests passed;
+- 13/13 connected integration tests passed with `RC2_ROOT` explicitly pointing to the qualified Kingpin/Gateway checkout;
+- `approved-review-foreign-principal-ingress-refusal` reproduced its PASS directly;
+- typecheck passed;
+- release smoke passed on its available static/unconnected checks.
+
+The lower unit-test count reflects the intentionally smaller public-main test surface and does not replace or reinterpret the retained 409/409 qualification run.
+
 ## Provenance
 
 | Repository | Base commit | Inventory |
