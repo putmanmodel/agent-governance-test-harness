@@ -41,6 +41,7 @@ export const runtimeProfiles: Readonly<Record<string, RuntimeProfile>> = {
     drivers: {
       'retry-after-revocation': async () => (await import('./adapters/kingpin-rc2/gateway-scenario.ts')).runGatewayScenario(),
       'human-approval-replay': async () => (await import('./adapters/kingpin-rc2/review.ts')).runHumanApprovalReplay(),
+      'approved-review-foreign-principal-ingress-refusal': async () => (await import('./adapters/kingpin-rc2/foreign-review.ts')).runForeignReview(),
       'delegated-handoff': async () => (await import('./adapters/kingpin-rc2/handoff.ts')).runDelegatedHandoff(),
       'unknown-execution-survives-restart': async () => {
         const family = await (await import('./adapters/kingpin-rc2/unknown-restart.ts')).runUnknownRestartFamily();

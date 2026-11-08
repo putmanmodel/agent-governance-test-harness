@@ -37,4 +37,8 @@ export const approvedRestartRegistration: ScenarioRegistration = {
   id: 'approved-review-revocation-survives-restart', name: 'Approved Review Revocation Survives Restart',
   requires: ['human-review', 'revocation', 'execution-accounting', 'durable-restart'],
 };
-export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration, reviewRestartRegistration, unknownRestartRegistration, approvedRestartRegistration] as const;
+export const foreignReviewRegistration: ScenarioRegistration = {
+  id: 'approved-review-foreign-principal-ingress-refusal', name: 'Approved Review Foreign Principal Ingress Refusal',
+  requires: ['multi-principal', 'human-review', 'execution-accounting'],
+};
+export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration, reviewRestartRegistration, unknownRestartRegistration, approvedRestartRegistration, foreignReviewRegistration] as const;

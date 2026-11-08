@@ -69,7 +69,7 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
   reconciled?: (evidence: unknown, outcome: string) => void;
   recovery?: { lockFile: string; before(): void; after(count: number): void };
   ownershipLock?: string;
-  reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
+  observeExecute?: boolean; reviewer?: boolean; beforeEffect?: (request: RecordData) => void; delegatedAgent?: { principal: string; agent: string; sessionId: string } } = {}) {
   const load = (file: string) => import(pathToFileURL(join(rc2Root, file)).href);
   const [kingpin, sqlite, gateway, sandboxModule, executionModule, authModule, cdeModule, config] = await Promise.all([
     load('kingpin/index.js'), load('kingpin/state/sqlite.js'), load('gateway_node/server.js'),
@@ -101,7 +101,9 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     store = new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: options.persistent?.create ?? true }) as Store;
     const authority = new kingpin.KingpinAuthority({ store });
     const sandboxAdapter = sandboxModule.createSandboxAdapter(sandbox);
+    const executeCalls: RecordData[] | undefined = options.observeExecute ? [] : undefined;
     const adapter = { ...sandboxAdapter, execute(request: RecordData) {
+      executeCalls?.push(structuredClone(request));
       options.beforeEffect?.(request);
       return sandboxAdapter.execute(request);
     }, reconcile(evidence: unknown) {
@@ -157,12 +159,18 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     const address = server!.address();
     if (!address || typeof address === 'string') throw new Error('Gateway listener unavailable');
     const url = `http://127.0.0.1:${address.port}`;
-    async function http(path: string, body?: RecordData, role: 'agent' | 'admin' | 'reviewer' | 'delegate' = 'agent') {
-      const response = await fetch(url + path, { method: body ? 'POST' : 'GET',
-        headers: { authorization: `Bearer ${tokens[role]}`, 'content-type': 'application/json' },
-        ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(20_000) });
-      return { status: response.status, body: await response.json() as RecordData,
-        requestId: response.headers.get('x-request-id')!, reviewId: response.headers.get('x-review-id') };
+    type Role = keyof typeof tokens;
+    async function exchange(path: string, serialized: string | undefined, role: Role) {
+      const authorization = `Bearer ${tokens[role]}`;
+      const method = serialized === undefined ? 'GET' : 'POST';
+      const response = await fetch(url + path, { method,
+        headers: { authorization, 'content-type': 'application/json' },
+        body: serialized, signal: AbortSignal.timeout(20_000) });
+      return { transport: { path, method, serialized, principal: authentication.authenticate(authorization) }, response: { status: response.status, body: await response.json() as RecordData,
+        requestId: response.headers.get('x-request-id')!, reviewId: response.headers.get('x-review-id') } };
+    }
+    async function http(path: string, body?: RecordData, role: Role = 'agent') {
+      return (await exchange(path, JSON.stringify(body), role)).response;
     }
     async function readExecutionReceipt(executionId: string): Promise<RecordData> {
       const response = await http(`/executions/${encodeURIComponent(executionId)}`, undefined, 'admin');
@@ -258,7 +266,8 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     };
     const observe: ObserveEffects = async (request, decision) => translateEffects(request.requestId,
       decision.evidence.kingpin_rc2_gateway as GatewayEvidence);
-    return { build: config.buildIdentity(kingpin.loadPolicy()), runtime, observe, close, root, http, audit, ledger, inspect, input, readExecutionReceipt,
+    return { build: config.buildIdentity(kingpin.loadPolicy()), runtime, observe, close, root, http, exchange,
+      executeObservation: () => ({ ready: executeCalls !== undefined, calls: structuredClone(executeCalls) }), audit, ledger, inspect, input, readExecutionReceipt,
       // Trusted test-host transport only; credentials must never enter artifacts.
       adminConnection: { url, authorization: `Bearer ${tokens.admin}` } };
   } catch (error) { await close(); throw error; }

@@ -44,7 +44,10 @@ UNSUPPORTED  UNKNOWN Execution Survives Restart
 UNSUPPORTED  Approved Review Revocation Survives Restart
              missing: human-review, execution-accounting, durable-restart
 
-1 passed; 0 failed; 8 unsupported (not passed coverage).
+UNSUPPORTED  Approved Review Foreign Principal Ingress Refusal
+             missing: multi-principal, human-review, execution-accounting
+
+1 passed; 0 failed; 9 unsupported (not passed coverage).
 ```
 
 UNSUPPORTED means the selected runtime does not declare capabilities required by that scenario; it is not a failed governance test and does not count as passed coverage.
@@ -101,7 +104,7 @@ With Python 3 available as `python3` (standard library only, no pip install):
 npm run smoke
 ```
 
-This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 8 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
+This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 9 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
 
 [Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64; hosted GitHub Actions has successfully run on the public repository. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
 
@@ -111,7 +114,7 @@ This checks help/discovery, built-in portable human/JSON output and the [checked
 - **FAIL:** assertions failed or a supported path encountered setup, protocol or execution errors.
 - **UNSUPPORTED:** prerequisites are missing; the scenario driver was not run. This is not failed governance and is not passed coverage.
 
-Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the nine scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
+Exit 0 means no FAIL results, even with unsupported scenarios. Failures, invalid usage and unknown runtime/suite names exit nonzero. The `current` convenience suite contains the ten scenarios above in this release and may grow in later releases; published scenario IDs remain stable. The common CLI writes available timelines only when `--artifact-dir` is supplied.
 
 ```bash
 npm run harness -- --help             # -h also works; no runtime launch
@@ -272,13 +275,13 @@ The invariant requires native staging success, target absence throughout, correl
 
 Run `npm run scenario:restart` for `artifacts/capability-revocation-survives-restart.rc2-gateway.jsonl`. Process A completes a real bounded write, acknowledges write-capability revocation, and closes its Gateway, CDE worker and database before exiting. Only after observing A's exit does the harness start distinct Process B, which reopens the existing SQLite database (`create: false`) and sandbox. Stable principal/context and policy metadata, database/sandbox identity, preserved audit prefix and stored capability revocation prove continuity. B performs fresh CDE/Kingpin evaluation, receives denial, and leaves the complete ledger and target file unchanged. Final cleanup removes the fixture.
 
-This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 8 UNSUPPORTED.
+This tests specific durable revocation across graceful process replacement, not crash recovery, UNKNOWN recovery, approval replay, cancellation or preservation of process-local CDE history. CDE starts fresh. No invariant prohibits unrelated policy-defined recovery. The sixth current-suite scenario requires `revocation`, `execution-accounting` and `durable-restart`; only the RC2 Gateway profile has a driver. `durable-restart` narrowly means the configured integration can replace its process and reopen preserved governance state; it does not promise restart support for all scenarios. Subprocess profiles with only revocation report 1 PASS / 9 UNSUPPORTED.
 
 ## Human Approval Consumption Survives Restart
 
 Run `npm run scenario:review-restart` for `artifacts/human-approval-consumption-survives-restart.rc2-gateway.jsonl`. Real CDE produces HUMAN REVIEW; an authenticated reviewer approves it and the original agent consumes it once for a bounded write. Process A closes and exits before distinct Process B reopens the same database and sandbox. B directly replays `/reviews/<original-consumed-id>/execute` with the identical bound body and governed identity. RC2 returns 409; consumed review/history, execution accounting and file state remain unchanged.
 
-No fresh post-restart CDE or Kingpin decision is expected or invented. The outer timeline records the original consumption ALLOW and real execution; the initial hold/approval, process order, and later native refusal are retained in adapter evidence as one compound experiment. The invariant tests durable one-use state, not fresh-request evaluation or concurrent consumption. Existing `human-review`, `execution-accounting`, and `durable-restart` capabilities suffice. The current suite now has nine scenarios: RC2 Gateway 9 PASS; subprocess profiles with revocation only 1 PASS / 8 UNSUPPORTED.
+No fresh post-restart CDE or Kingpin decision is expected or invented. The outer timeline records the original consumption ALLOW and real execution; the initial hold/approval, process order, and later native refusal are retained in adapter evidence as one compound experiment. The invariant tests durable one-use state, not fresh-request evaluation or concurrent consumption. Existing `human-review`, `execution-accounting`, and `durable-restart` capabilities suffice. The current suite now has ten scenarios: RC2 Gateway 10 PASS; subprocess profiles with revocation only 1 PASS / 9 UNSUPPORTED.
 
 ## UNKNOWN Execution Survives Restart
 
@@ -293,7 +296,7 @@ Both cases inspect committed state outside A before and after death. Only after 
 
 The durable **harness-labelled** `execute` journal entry means entry into the harness wrapper, not completion of the underlying executor or physical write. A records one wrapper entry in each case; parent snapshots establish zero physical effects in the before case and one completed write in the after case. B records zero execute entries and one native sandbox reconciliation. Native ledger/audit and unchanged file evidence corroborate no redispatch. Reconciliation inspects evidence; retry/re-execution performs the operation again. UNKNOWN is not retry authority.
 
-The common CLI reports one UNKNOWN-family PASS only when both experiments pass: Gateway remains 9 PASS; subprocess profiles remain 1 PASS / 8 UNSUPPORTED. Existing `execution-accounting`, `durable-restart`, and `reconciliation` capabilities suffice. This POSIX SIGKILL/flock driver tests specific crash semantics; `durable-restart` alone does not promise all crash behavior. Generic core and timeline schema remain unchanged (version 1). Direct commands refresh their respective artifacts; native IDs/PIDs/timestamps are not deterministic.
+The common CLI reports one UNKNOWN-family PASS only when both experiments pass: Gateway remains 10 PASS; subprocess profiles remain 1 PASS / 9 UNSUPPORTED. Existing `execution-accounting`, `durable-restart`, and `reconciliation` capabilities suffice. This POSIX SIGKILL/flock driver tests specific crash semantics; `durable-restart` alone does not promise all crash behavior. Generic core and timeline schema remain unchanged (version 1). Direct commands refresh their respective artifacts; native IDs/PIDs/timestamps are not deterministic.
 
 ## Licensing
 
@@ -322,3 +325,11 @@ The named `zero_ledger`, `zero_execution_events`, `zero_adapter_calls`, and `zer
 The direct command also writes `approved-review-revocation-survives-restart.rc2-gateway.provenance.json`. It binds the final JSONL SHA-256 to run-time Harness/source commits and changed-file lists, source/resource inventories, installed Gateway dependency files, Node/platform/SQLite identity, Python interpreter identity and distribution versions, and the resolved runtime root. Each child captures the runtime inventory before loading native modules and after shutdown; qualification requires these inventories to agree. The inventory is a superset of relevant files, not an execution trace or cryptographic attestation. The sidecar avoids a circular artifact self-hash. Older evidence lacking these fields does not qualify under the hardened verifier.
 
 `kingpin-rc2` and `.rc2-gateway.jsonl` retain historical controlled-evaluator adapter naming. This driver loads **repository source**, not an installed npm SDK. When the retained public `kingpin-runtime@0.1.0-rc.3` archive is available, its pinned archive digest and 17 JS/SQL/default-policy file hashes are compared to the loaded source inventory and retained in provenance. An absent or different archive does not establish SDK equivalence; naming never establishes it. SDK component equivalence does not qualify the standalone npm package, the complete public deployment environment, or other authority/restart combinations.
+
+### Approved review presented by a foreign principal
+
+Run `npm run scenario:foreign-review` to retain the native exchanges, run-time source inventories and artifact SHA-256. Two independently authenticated agents have disjoint session scopes. B presents A’s exact serialized write request and original approved review ID. The Gateway rejects the request at runtime-scope authorization. The qualification verifies B’s runtime permission, the ordered native rejection and A’s unchanged approval. The adapter recorded zero execute entries throughout the observed window. Full ledger reads were empty and the bounded target was absent at the initial, approved and post-response observations. The filesystem samples do not cover transient effects through unobserved external paths. Generated IDs correlate exchanges within the run. A coherent offline rename of every occurrence cannot be distinguished by those joins.
+
+The live driver runs Kingpin’s read-only review-record validator on the pending review, approval response and both persisted approved snapshots. The recorded verifier mirrors Kingpin’s original review envelope checks across the pending, approved and post-refusal records. It requires the six native envelope fields, a recognized level, nonempty-string tool entries, membership of the reviewed `fs.write` in `tools`, a restoration step of two, a nonnegative safe-integer revision, and a clean-evaluation count of zero or one (zero at full authority). The gate-one `LOW_CONFIDENCE` review must include `LOW_CONFIDENCE_REQUIRES_HUMAN_REVIEW` in its original reason codes. The decision, review and HUMAN REVIEW audit reasons must agree. The enforcement hold must identify the same tool, decision, request and evaluation as A’s review and report the `human_review` outcome.
+
+The scope is a single running repository-source Gateway. The inner review owner guard, fresh policy evaluation for B, credential rotation, delegation, restart, model replacement and standalone npm-package behavior are outside this case.
