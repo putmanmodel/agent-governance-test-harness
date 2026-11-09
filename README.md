@@ -113,9 +113,9 @@ With Python 3 available as `python3` (standard library only, no pip install):
 npm run smoke
 ```
 
-This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. Both runtime runs must produce 1 PASS / 9 UNSUPPORTED. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
+This checks help/discovery, built-in portable human/JSON output and the [checked-in Python example](examples/python-governance-runtime.py) through the external CLI. For each runtime, the [portable qualification profiles](scripts/portable-profiles.ts) pin the ten published IDs and require exactly one passing `retry-after-revocation`. Smoke also expects the other nine scenarios to report UNSUPPORTED. It runs the portable adapters only. It checks protocol/report/timeline versions and requires no RC2 checkout. Typecheck and unit tests remain separate, so the full release sequence is `npm ci`, `npm run typecheck`, `npm test`, `npm run smoke`.
 
-[Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64; hosted GitHub Actions has successfully run on the public repository. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
+[Portable CI](.github/workflows/portable.yml) runs that sequence with Node 24 and Python 3.14 on Ubuntu 24.04. Local validation is macOS arm64. Windows support is not claimed. See the [environment notes](docs/V1_DEVELOPER_PREVIEW.md#environment-and-reference-integration).
 
 ## Help, discovery and failure evidence
 

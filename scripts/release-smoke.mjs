@@ -5,6 +5,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { validateQualification } from './validate-qualification.ts';
+import { referenceProfile, pythonProfile } from './portable-profiles.ts';
+
 const root = fileURLToPath(new URL('../', import.meta.url));
 const temporary = mkdtempSync(join(tmpdir(), 'governance-smoke-'));
 function cli(args) {
@@ -17,15 +20,14 @@ function cli(args) {
   assert.equal(result.status, 0, result.stderr || result.stdout);
   return result.stdout;
 }
-function checkReport(report, runtimeId) {
-  assert.equal(report.reportVersion, '1');
-  assert.equal(report.runtimeId, runtimeId);
-  assert.equal(report.suiteId, 'current');
+function qualifiedReport(args, profile) {
+  const report = JSON.parse(cli(args));
+  validateQualification(profile, report);
   assert.deepEqual(report.summary, { passed: 1, failed: 0, unsupported: 9 });
-  assert.equal(report.results.length, 10);
-  assert.equal(report.results[0].scenarioId, 'retry-after-revocation');
-  assert.equal(report.results[0].status, 'PASS');
-  assert.ok(report.results.slice(1).every(r => r.status === 'UNSUPPORTED' && r.missingCapabilities.length));
+  for (const row of report.results.filter(r => r.status === 'UNSUPPORTED')) {
+    assert.ok(Array.isArray(row.missingCapabilities) && row.missingCapabilities.length);
+  }
+  return report;
 }
 try {
   for (const flag of ['--help', '-h']) assert.match(cli([flag]), /--command-arg/);
@@ -34,13 +36,12 @@ try {
   console.log('PASS help and static discovery (RC2 unavailable)');
   const base = ['run', '--suite', 'current'];
   assert.match(cli([...base, '--runtime', 'subprocess-reference']), /1 passed; 0 failed; 9 unsupported/);
-  checkReport(JSON.parse(cli([...base, '--runtime', 'subprocess-reference', '--json'])), 'subprocess-reference');
+  qualifiedReport([...base, '--runtime', 'subprocess-reference', '--json'], referenceProfile);
   console.log('PASS subprocess-reference: 1 PASS / 9 UNSUPPORTED; report version 1');
-  const report = JSON.parse(cli([...base, '--runtime', 'subprocess', '--command', 'python3',
+  const report = qualifiedReport([...base, '--runtime', 'subprocess', '--command', 'python3',
     '--command-arg', 'examples/python-governance-runtime.py', '--capability', 'revocation',
-    '--runtime-id', 'python-example', '--json', '--artifact-dir', temporary]));
-  checkReport(report, 'python-example');
-  const timeline = readFileSync(report.results[0].artifacts[0].path, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+    '--runtime-id', 'python-example', '--json', '--artifact-dir', temporary], pythonProfile);
+  const timeline = readFileSync(report.results.find(r => r.scenarioId === 'retry-after-revocation').artifacts[0].path, 'utf8').trim().split('\n').map(line => JSON.parse(line));
   assert.ok(timeline.every(r => r.harness_schema_version === '1'));
   const decisions = timeline.filter(r => r.category === 'governance').map(r => r.data.evidence.subprocess.native);
   assert.deepEqual(decisions.map(d => d.outcome), ['allow', 'deny']);

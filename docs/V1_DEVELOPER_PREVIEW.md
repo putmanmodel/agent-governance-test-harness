@@ -84,6 +84,14 @@ The literal example below illustrates a hypothetical three-result report, includ
 
 Use `npm run --silent harness -- run ... --json` to avoid npm's banner on stdout. Exit 0 may still include UNSUPPORTED coverage. CI must inspect required scenario IDs/statuses, not just the exit code. Native evidence is in timeline files, not part of the report envelope. `--artifact-dir` creates fresh run directories; exceptions before a driver returns may have no timeline. Artifacts are local files, not hosted URLs.
 
+## Qualification profiles
+
+The informational CLI exits 0 when no scenario reports FAIL, including an all-UNSUPPORTED suite. For strict release checks, pass the complete version-1 report from a successfully completed child to [validateQualification(profile, report)](../scripts/validate-qualification.ts). A profile declares `runtimeId` and `suiteId` (nonempty strings), `requiredPass` (an array of unique literal scenario IDs), and optionally `expectedIds` (the exact catalog of unique literal IDs). Keep these expectations independent of the registry and runtime declarations.
+
+The validator checks report and row identities, statuses, uniqueness, and summary counts. Each required ID must appear once with PASS. Any FAIL rejects qualification. Optional UNSUPPORTED rows are allowed. With an exact catalog, missing and extra IDs fail regardless of row order. Without an exact catalog, additional well-formed rows are allowed.
+
+The [portable profiles](../scripts/portable-profiles.ts) cover subprocess-reference and python-example on suite current. Both pin the ten published scenario IDs and require retry-after-revocation to PASS. The portable smoke separately verifies its expected nine UNSUPPORTED rows and Python evidence. Gateway execution is outside this hosted workflow.
+
 ## Reproduce the portable release checks
 
 From the repository root, with Node 24+ and npm (no global TypeScript required):
@@ -111,7 +119,7 @@ The Python fixture owns simple single-authority state; it is an interoperability
 
 ## Environment and reference integration
 
-Local validation: macOS arm64, Node 24.14.1, npm 11.11.0 and Python 3.14.6. Package engines allow Node >=24; the CI target is Node 24 and Python 3.14 on Ubuntu 24.04. The checked-in GitHub workflow still needs its first hosted run; configuration is not proof of Linux validation. Windows has not been tested and is not claimed supported.
+Local validation: macOS arm64, Node 24.14.1, npm 11.11.0 and Python 3.14.6. Package engines allow Node >=24; the CI target is Node 24 and Python 3.14 on Ubuntu 24.04. Windows has not been tested and is not claimed supported.
 
 The portable/default path needs no CDE/Kingpin checkout. Default unit tests read checked-in RC2 evidence fixtures but do not launch RC2. Live RC2 tests are separate (`npm run test:integration`) and require the sibling checkout or `RC2_ROOT`, its dependencies and a working Python evaluator. RC2 crash/restart experiments require POSIX SIGKILL/flock semantics; Linux execution of those experiments must be validated separately. No cancellation capability is implied.
 
