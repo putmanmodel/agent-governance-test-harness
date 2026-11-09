@@ -4,6 +4,15 @@ Adversarial tests for runtime authority across transitions.
 
 A small, framework-neutral TypeScript harness that tests specified authority-transition invariants against observable runtime evidence, with coverage determined by the selected runtime integration and supported scenarios. The harness orchestrates conditions, captures observations and evaluates invariants; the runtime under test owns authority decisions and enforcement.
 
+## Recent adversarial qualifications
+
+Two bounded authority-transition cases have been publicly qualified against the Kingpin Gateway integration:
+
+- **Approval → revocation → restart → stale approval replay** — A reviewer approved a bounded write. Its write capability was revoked before execution, and governance state survived a graceful restart. When the original approval was presented again, execution remained unauthorized. [Revocation and restart closeout](docs/QUALIFICATION_APPROVED_REVIEW_REVOCATION_RESTART.md)
+- **Foreign principal presents another principal's approved review** — A second principal authenticated with its own credential and presented the first principal's exact approved operation and original review ID. The Gateway refused the request before review consumption. The original review remained approved and unconsumed. [Foreign principal ingress refusal closeout](docs/QUALIFICATION_FOREIGN_PRINCIPAL_INGRESS_REFUSAL.md)
+
+These are scoped qualification results, not claims of general certification. Each closeout documents the tested boundary, retained evidence, adversarial false-PASS hardening, and explicit exclusions.
+
 ## Quick start
 
 After cloning, run these commands from the repository root with Node 24+ and npm. No global TypeScript, build step, Python or CDE/Kingpin checkout is required for this basic path.
