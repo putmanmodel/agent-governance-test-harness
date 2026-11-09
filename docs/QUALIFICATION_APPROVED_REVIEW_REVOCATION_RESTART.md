@@ -103,6 +103,10 @@ This qualification covers graceful restart, bounded sandbox `fs.write`, matching
 
 It does **not** qualify SIGKILL/crash recovery, model replacement, arbitrary tools or effects, lease-token revocation variants, all identity changes, all restart/recovery combinations, generalized revocation correctness, cryptographic execution attestation, or standalone npm-package behavior beyond the stated component-equivalence finding. It is not a production-readiness certification.
 
+## Acknowledgment
+
+This qualification case was prompted by a comparison scenario proposed by **Yuto Suzuki (Veritas Forge)**: an operation is approved, the underlying authority is revoked before execution, governance state survives a restart, and the original approval is presented again. Suzuki proposed the comparison case but did not implement or independently validate the Harness qualification or its results.
+
 ## Production Impact
 
 No Kingpin production code was changed for this case, and no Kingpin production defect was exposed. Hardening changes were confined to Harness scenario, evidence, and qualification machinery.
