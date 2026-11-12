@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,6 +15,8 @@ import { rc2Root } from './load.ts';
 type RecordData = Record<string, any>;
 interface Transaction {
   audit: { append(event: RecordData): unknown };
+  contexts: { get(key: string): RecordData };
+  revocations: { list(key: string): Set<string> };
   executions: { list(): RecordData[] };
 }
 interface Store {
@@ -65,6 +67,12 @@ export function translateEffects(requestId: string, evidence: Pick<GatewayEviden
 }
 
 export async function createGatewayAdapter(original: GovernanceRequest, options: { persistent?: { root: string; create: boolean }; receiptFailure?: boolean;
+  memoryRotation?: boolean;
+  agentChannels?: string[];
+  detectorInput?: () => RecordData | undefined;
+  restartRotation?: { phase: 'A' | 'B'; agent: string; retired: string; reviewer: string; tagKey: string;
+    record(entry: RecordData): void };
+  decorateExecutionAdapter?: (adapter: { execute(request: RecordData): unknown }) => { execute(request: RecordData): unknown };
   terminalSuccess?: (event: RecordData) => void;
   reconciled?: (evidence: unknown, outcome: string) => void;
   recovery?: { lockFile: string; before(): void; after(count: number): void };
@@ -98,11 +106,19 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     }
   };
   try {
-    store = new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: options.persistent?.create ?? true }) as Store;
+    store = options.memoryRotation ? new kingpin.MemoryStateStore() : new sqlite.SQLiteStateStore({ filename: join(root, 'state.sqlite'), create: options.persistent?.create ?? true }) as Store;
     const authority = new kingpin.KingpinAuthority({ store });
     const sandboxAdapter = sandboxModule.createSandboxAdapter(sandbox);
     const executeCalls: RecordData[] | undefined = options.observeExecute ? [] : undefined;
+    let dispatch: RecordData | undefined;
+    const rotation = options.memoryRotation || options.restartRotation;
+    const entries: RecordData[] = [];
     const adapter = { ...sandboxAdapter, execute(request: RecordData) {
+      if (rotation) {
+        const entry = { ...dispatch, sequence: entries.length + 1, timestamp: new Date().toISOString(), operation: structuredClone(request) };
+        entries.push(entry);
+        options.restartRotation?.record(entry);
+      }
       executeCalls?.push(structuredClone(request));
       options.beforeEffect?.(request);
       return sandboxAdapter.execute(request);
@@ -129,16 +145,21 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
         return work(tx);
       });
     } };
-    const execution = new executionModule.ExecutionRuntime({ store: executionStore, adapter });
+    const execution = new executionModule.ExecutionRuntime({ store: executionStore, adapter: options.decorateExecutionAdapter?.(adapter) ?? adapter });
     const tokens = { agent: randomBytes(32).toString('base64url'), admin: randomBytes(32).toString('base64url'), reviewer: randomBytes(32).toString('base64url'), delegate: randomBytes(32).toString('base64url') };
+    if (options.restartRotation) {
+      tokens.agent = options.restartRotation.agent;
+      tokens.reviewer = options.restartRotation.reviewer;
+    }
     const context = { session_id: original.provenance.scenarioId, channel_id: 'channel', scene_id: 'scene', task_id: null };
-    const authentication = authModule.createAuthentication({ schema_version: '1.0', principals: [
-      { token: tokens.agent, principal_id: original.principal, role: 'agent', agent_id: original.agent, allowed_contexts: [context] },
+    const makeAuthentication = () => authModule.createAuthentication({ schema_version: '1.0', principals: [
+      { token: tokens.agent, principal_id: original.principal, role: 'agent', agent_id: original.agent, allowed_contexts: options.agentChannels?.map(channel_id => ({ ...context, channel_id })) ?? [context] },
       { token: tokens.admin, principal_id: 'harness-admin', role: 'authority_admin' },
       ...(options.delegatedAgent ? [{ token: tokens.delegate, principal_id: options.delegatedAgent.principal, role: 'agent',
         agent_id: options.delegatedAgent.agent, allowed_contexts: [{ ...context, session_id: options.delegatedAgent.sessionId }] }] : []),
       ...(options.reviewer ? [{ token: tokens.reviewer, principal_id: 'harness-reviewer', role: 'reviewer', allowed_contexts: [context] }] : []),
     ] });
+    let authentication = makeAuthentication();
     const python = process.env.CDE_PYTHON ?? (existsSync(join(rc2Root, '.venv-task/bin/python')) ? join(rc2Root, '.venv-task/bin/python') : 'python3');
     // startCde spawns synchronously before awaiting readiness; prevent source-tree pycache writes.
     const previous = process.env.PYTHONDONTWRITEBYTECODE;
@@ -149,24 +170,63 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     // Match native startEvaluation: exclusive evaluator ownership precedes recover(), then serving.
     if (options.recovery) { options.recovery.before(); options.recovery.after(execution.recover()); }
     const logs: RecordData[] = [];
-    const app = gateway.createGatewayApp({ mode: 'evaluation', authority, authentication, adapter, execution,
-      build: config.buildIdentity(kingpin.loadPolicy()), evaluateTurn: (packet: unknown) => cde!.evaluate(packet),
-      logDecision: (record: RecordData) => logs.push(structuredClone(record)) });
-    await new Promise<void>((resolve, reject) => {
-      server = app.listen(0, '127.0.0.1', resolve) as Server;
-      server.once('error', reject);
-    });
-    const address = server!.address();
-    if (!address || typeof address === 'string') throw new Error('Gateway listener unavailable');
-    const url = `http://127.0.0.1:${address.port}`;
+    async function listen() {
+      const app = gateway.createGatewayApp({ mode: 'evaluation', authority, authentication, adapter, execution,
+        build: config.buildIdentity(kingpin.loadPolicy()), evaluateTurn: (packet: unknown) => options.detectorInput?.() ?? cde!.evaluate(packet),
+        logDecision: (record: RecordData) => logs.push(structuredClone(record)) });
+      await new Promise<void>((resolve, reject) => {
+        server = app.listen(0, '127.0.0.1', resolve) as Server;
+        server.once('error', reject);
+      });
+      const address = server!.address();
+      if (!address || typeof address === 'string') throw new Error('Gateway listener unavailable');
+      return `http://127.0.0.1:${address.port}`;
+    }
+    let url = await listen();
+    let phase = options.restartRotation?.phase ?? 'A';
+    const tagKey = options.restartRotation?.tagKey ?? randomBytes(32);
+    const tag = (header: string) => createHmac('sha256', tagKey).update(header).digest('hex');
+    const firstToken = options.restartRotation?.retired ?? tokens.agent;
+    const consumption: RecordData[] = [];
+    if (rotation) {
+      const consume = authority.consumeReview.bind(authority);
+      authority.consumeReview = (id: string, operation: RecordData, principal: RecordData) => {
+        const entry: RecordData = { id, operation: structuredClone(operation), principal, phase };
+        consumption.push(entry);
+        try {
+          const result = consume(id, operation, principal);
+          entry.authorized = result.execution_authorized;
+          if (result.reason !== undefined) entry.reason = result.reason;
+          return result;
+        } catch (error) {
+          entry.error = (error as Error).message;
+          throw error;
+        }
+      };
+    }
+    async function rotate() {
+      if (!options.memoryRotation || phase !== 'A' || !server?.listening) throw new Error('Invalid ingress rotation');
+      const old = server;
+      old.closeAllConnections();
+      await new Promise<void>((ok, fail) => old.close(error => error ? fail(error) : ok()));
+      tokens.agent = randomBytes(32).toString('base64url');
+      authentication = makeAuthentication();
+      phase = 'B';
+      url = await listen();
+      return { retiredListening: old.listening, pid: process.pid, store: store!.constructor.name };
+    }
     type Role = keyof typeof tokens;
-    async function exchange(path: string, serialized: string | undefined, role: Role) {
-      const authorization = `Bearer ${tokens[role]}`;
+    async function exchange(path: string, serialized: string | undefined, role: Role | 'retired') {
+      const authorization = `Bearer ${role === 'retired' ? firstToken : tokens[role]}`;
       const method = serialized === undefined ? 'GET' : 'POST';
+      if (rotation) dispatch = { phase, tag: tag(authorization), reviewId: path.split('/')[2] };
       const response = await fetch(url + path, { method,
         headers: { authorization, 'content-type': 'application/json' },
         body: serialized, signal: AbortSignal.timeout(20_000) });
-      return { transport: { path, method, serialized, principal: authentication.authenticate(authorization) }, response: { status: response.status, body: await response.json() as RecordData,
+      let principal = null;
+      try { principal = authentication.authenticate(authorization); }
+      catch (error) { if (role !== 'retired' || (error as {status?: number}).status !== 401) throw error; }
+      return { transport: { path, method, serialized, principal, ...(rotation ? { tag: tag(authorization), phase, pid: process.pid, url } : {}) }, response: { status: response.status, body: await response.json() as RecordData,
         requestId: response.headers.get('x-request-id')!, reviewId: response.headers.get('x-review-id') } };
     }
     async function http(path: string, body?: RecordData, role: Role = 'agent') {
@@ -266,7 +326,8 @@ export async function createGatewayAdapter(original: GovernanceRequest, options:
     };
     const observe: ObserveEffects = async (request, decision) => translateEffects(request.requestId,
       decision.evidence.kingpin_rc2_gateway as GatewayEvidence);
-    return { build: config.buildIdentity(kingpin.loadPolicy()), runtime, observe, close, root, http, exchange,
+    return { build: config.buildIdentity(kingpin.loadPolicy()), runtime, observe, close, root, http, exchange, rotate, consumption, entries,
+      authorityState: (key: string) => store!.transaction(tx => ({ context: tx.contexts.get(key), revoked: [...tx.revocations.list(key)] })),
       executeObservation: () => ({ ready: executeCalls !== undefined, calls: structuredClone(executeCalls) }), audit, ledger, inspect, input, readExecutionReceipt,
       // Trusted test-host transport only; credentials must never enter artifacts.
       adminConnection: { url, authorization: `Bearer ${tokens.admin}` } };

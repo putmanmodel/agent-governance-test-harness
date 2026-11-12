@@ -1,0 +1,344 @@
+{
+  "policy": "Candidate disclosure derivatives. Keep all originals private. In the first governance record only, replace the four absolute provenance paths listed below with field-specific placeholders. Preserve every other JSON value and array order. Serialize UTF-8 compact JSON, ensure_ascii=True, LF after every record. Hash original and derivative bytes separately with SHA-256.",
+  "paths": [
+    "data.evidence.harness.root",
+    "data.evidence.runtime.root",
+    "data.evidence.runtime.nodeExecutable",
+    "data.evidence.runtime.python.executable"
+  ],
+  "review": "Originals disclose account and checkout paths and interpreter locations. Derivatives retain reviewed run identifiers, PIDs, timestamps, executable hashes, package versions, source hashes and Git status for correlation and provenance. No raw credentials identified. Each derivative requires the unchanged scenario verifier. CR-03 has no executed artifact.",
+  "artifacts": [
+    {
+      "collection": "historical",
+      "scenario": "H3-Memory-CR-01",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "94ffee106ee190eaeef24b36cfe08726d2576d46",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/capabilities.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? evidence/h3-memory/H3-Memory-CR-01.jsonl",
+          "?? evidence/h3-memory/H3-Memory-CR-02.jsonl",
+          "?? src/adapters/kingpin-rc2/h3-memory-check.ts",
+          "?? src/adapters/kingpin-rc2/h3-memory.ts",
+          "?? tests/h3-memory.test.ts",
+          "?? tests/integration/h3-memory.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "b1035ee03a796166b095b901c17292309f93b09b069c517b3b557860bdf864c1",
+      "derivative": "evidence/h3-memory/H3-Memory-CR-01.jsonl",
+      "derivativeSHA256": "ff0e91b32f5fbaad08da2e32972e80a994237dc936f07030f372ef204577a192"
+    },
+    {
+      "collection": "historical",
+      "scenario": "H3-Memory-CR-02",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "94ffee106ee190eaeef24b36cfe08726d2576d46",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/capabilities.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? evidence/h3-memory/H3-Memory-CR-01.jsonl",
+          "?? evidence/h3-memory/H3-Memory-CR-02.jsonl",
+          "?? src/adapters/kingpin-rc2/h3-memory-check.ts",
+          "?? src/adapters/kingpin-rc2/h3-memory.ts",
+          "?? tests/h3-memory.test.ts",
+          "?? tests/integration/h3-memory.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "d26afa257e6d76506ae3437448ee99025c8b48d5e344284f183efd3c1a753604",
+      "derivative": "evidence/h3-memory/H3-Memory-CR-02.jsonl",
+      "derivativeSHA256": "3556ffe8b7a95477ad65903212f335c51fc357df8562409478a731d98c01d096"
+    },
+    {
+      "collection": "historical",
+      "scenario": "H3-SQLite-CR-01",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "8989956e59401631d3b42f56266320a0fd547954",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/capabilities.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/kingpin-rc2/h3-memory-check.ts",
+          " M src/adapters/kingpin-rc2/h3-memory.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite-check.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite-child.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite-snapshot.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite.ts",
+          "?? tests/h3-sqlite.test.ts",
+          "?? tests/integration/h3-sqlite.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "5dbfb9502c61fc4be10c637e9ff01a9f72aa144bc261c555a31f7faaf63fbf66",
+      "derivative": "evidence/h3-sqlite/H3-SQLite-CR-01.jsonl",
+      "derivativeSHA256": "b93b0b7c187aeb4efdb996657c159f702fba36c0755ead727de8a773c1c96fd1"
+    },
+    {
+      "collection": "historical",
+      "scenario": "H3-SQLite-CR-02",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "8989956e59401631d3b42f56266320a0fd547954",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/capabilities.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/kingpin-rc2/h3-memory-check.ts",
+          " M src/adapters/kingpin-rc2/h3-memory.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite-check.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite-child.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite-snapshot.ts",
+          "?? src/adapters/kingpin-rc2/h3-sqlite.ts",
+          "?? tests/h3-sqlite.test.ts",
+          "?? tests/integration/h3-sqlite.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "debd4361541159ddc392b3a7a2f30b2186d7c7fbfc2cbd9ef6d33a9e29d91aa8",
+      "derivative": "evidence/h3-sqlite/H3-SQLite-CR-02.jsonl",
+      "derivativeSHA256": "d4c0ba80d3917fbc220cd75f08b2343c973a1605ad89237db44ffc0a4b906392"
+    },
+    {
+      "collection": "historical",
+      "scenario": "H4-SQLite-CR-04",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "24f3c641b3f60315f980bd1cf4e7a9fbfb879b3b",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite-check.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite-child.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-04.jsonl",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-05.jsonl",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-06.jsonl",
+          "?? src/adapters/kingpin-rc2/h4-check.ts",
+          "?? tests/h4-contraction.test.ts",
+          "?? tests/integration/h4-contraction.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "bf0f95247a0b552555f8b1d78e411a64124cc7478a37486167305b4c4cf74c60",
+      "derivative": "evidence/h4-sqlite/H4-SQLite-CR-04.jsonl",
+      "derivativeSHA256": "f74e752e84281a356b77775ccc530ea8332e5789f11367e857b6d8d07863b3b1"
+    },
+    {
+      "collection": "historical",
+      "scenario": "H4-SQLite-CR-05",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "24f3c641b3f60315f980bd1cf4e7a9fbfb879b3b",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite-check.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite-child.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-04.jsonl",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-05.jsonl",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-06.jsonl",
+          "?? src/adapters/kingpin-rc2/h4-check.ts",
+          "?? tests/h4-contraction.test.ts",
+          "?? tests/integration/h4-contraction.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "4d16c46974866ad1986bf35b92354b436fe4325e75e57eed484653ad5df094a5",
+      "derivative": "evidence/h4-sqlite/H4-SQLite-CR-05.jsonl",
+      "derivativeSHA256": "8895b62c7ad0b1264485aba03be9601a818dee10f94a3ad04dad568218a9b14b"
+    },
+    {
+      "collection": "historical",
+      "scenario": "H4-SQLite-CR-06",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "24f3c641b3f60315f980bd1cf4e7a9fbfb879b3b",
+        "dirty": true,
+        "changedFiles": [
+          "M scenarios/registrations.ts",
+          " M src/adapters/kingpin-rc2/gateway.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite-check.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite-child.ts",
+          " M src/adapters/kingpin-rc2/h3-sqlite.ts",
+          " M src/adapters/subprocess/profile.ts",
+          " M src/core/applicability.ts",
+          " M src/harness-cli.ts",
+          " M src/runtime-registry.ts",
+          " M src/suite-runner.ts",
+          " M tests/cli-usability.test.ts",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-04.jsonl",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-05.jsonl",
+          "?? evidence/h4-sqlite/H4-SQLite-CR-06.jsonl",
+          "?? src/adapters/kingpin-rc2/h4-check.ts",
+          "?? tests/h4-contraction.test.ts",
+          "?? tests/integration/h4-contraction.test.ts"
+        ]
+      },
+      "kingpin": "11ad113d083e3afa5349a979d010bc82e8432153",
+      "inventory": "2be22ff1f62613476bad4790f02661795287e14311a0fd8cf90ace51c48f76a0",
+      "originalSHA256": "557f3a33b0527b00bf8848db4d26bd693d98f3295f48337e872e50361cc63f89",
+      "derivative": "evidence/h4-sqlite/H4-SQLite-CR-06.jsonl",
+      "derivativeSHA256": "27ba09776b23360d34e68dff62ec70477650b930e7960c7584a30f8e65bd6216"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H3-Memory-CR-01",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "044bfeb546c8c2e1ffb7f2c295c7de3f0599e7a5dd179ce68e9a252692439306",
+      "derivative": "evidence/public-release/h3-memory/H3-Memory-CR-01.jsonl",
+      "derivativeSHA256": "69f68f17319951e133905cb11b7f3bc5d98c210a04da4f3becc6dfd5aee9b818"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H3-Memory-CR-02",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "6e86b949ecc4f3ed1a66902002a443d67367bd8c23cbd7ea3667d6acbc501f70",
+      "derivative": "evidence/public-release/h3-memory/H3-Memory-CR-02.jsonl",
+      "derivativeSHA256": "93e86083519a2bba000202151b03d68af9bdd502d9a8c5a3b6d401ef24408772"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H3-SQLite-CR-01",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "5f31e273e2f38a59e43a2e57deaf5c0e05f093d1752cefb8ae08a30a6c75400b",
+      "derivative": "evidence/public-release/h3-sqlite/H3-SQLite-CR-01.jsonl",
+      "derivativeSHA256": "7c9355d904e254200de8a4dd8ce5f7a89029f1b91752ec3152699e274271860d"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H3-SQLite-CR-02",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "de88a8a3f1347f94359dbcea7619d5ea0790072986b3674a2d2aa4d779ca6a9e",
+      "derivative": "evidence/public-release/h3-sqlite/H3-SQLite-CR-02.jsonl",
+      "derivativeSHA256": "be810f1a19694a29cfb59a1df2e0a9d9675071efe4c3bcc285a22cacaf7b8f91"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H4-SQLite-CR-04",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "55cc20d3aae2488990731e79a71d07081292ba5137250dcf2f4670a7b2fc86e8",
+      "derivative": "evidence/public-release/h4-sqlite/H4-SQLite-CR-04.jsonl",
+      "derivativeSHA256": "5f3eed1947047b84d08866a9b6e5f12009dcfdd6c44f7d0af09e173b724cbf87"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H4-SQLite-CR-05",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "b98003c25350bd7c0af1c7ae3f2182623d4274a8f9eb9bf15bfb6975a81af843",
+      "derivative": "evidence/public-release/h4-sqlite/H4-SQLite-CR-05.jsonl",
+      "derivativeSHA256": "5aba3d3cb9fb5d0eeae6f1f8734383c40fad48d90f2088af8630f9e833a8782e"
+    },
+    {
+      "collection": "public-release",
+      "scenario": "H4-SQLite-CR-06",
+      "verdict": "PASS",
+      "harness": {
+        "commit": "dfd1da3a18ffe5b641e778655d02f17ae6e09c06",
+        "dirty": false,
+        "changedFiles": []
+      },
+      "kingpin": "eb323c17938c828372bef5faad82e1343efad911",
+      "inventory": "4e503cfc769f098c727c373801655f706d605e8293c01220fdb4798e4af6de96",
+      "originalSHA256": "016e564dc440777a09f9ab01174cd979f1f14ae13bb9b5b0261bf53f34e23025",
+      "derivative": "evidence/public-release/h4-sqlite/H4-SQLite-CR-06.jsonl",
+      "derivativeSHA256": "8d0142d6ad164a18222d9d86985eeca59f48b6361a21d8b7b807ef28134d8f59"
+    }
+  ]
+}

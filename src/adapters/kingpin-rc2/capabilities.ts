@@ -6,5 +6,5 @@ export const rc2GovernanceRuntime: RuntimeDeclaration = {
 // Covers the implemented Gateway scenario drivers, not merely KingpinRc2Adapter.submit.
 export const rc2GatewayRuntime: RuntimeDeclaration = {
   id: 'kingpin-rc2-gateway', capabilities: ['revocation', 'human-review', 'execution-accounting',
-    'reconciliation', 'multi-principal', 'in-flight-observation', 'durable-restart'],
+    'sqlite-credential-rotation', 'memory-credential-rotation', 'reconciliation', 'multi-principal', 'in-flight-observation', 'durable-restart'],
 };

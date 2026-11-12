@@ -15,7 +15,7 @@ External runtime (no source registration):
 
 Options:
   --runtime       Built-in profile or external subprocess (see runtimes).
-  --suite         Suite to run: current.
+  --suite         Suite to run: current, h3-memory, h3-sqlite or h4-sqlite.
   --json          Emit one suite JSON report (reportVersion: "1").
   --artifact-dir  Save available timelines in a new run directory; report absolute paths.
   --command       External executable; no shell interpretation.
