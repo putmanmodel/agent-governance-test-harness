@@ -6,10 +6,12 @@ A small, framework-neutral TypeScript harness that tests specified authority-tra
 
 ## Recent adversarial qualifications
 
-Two bounded authority-transition cases have been publicly qualified against the Kingpin Gateway integration:
+The Kingpin Gateway qualification closeouts cover the following authority transitions.
 
 - **Approval → revocation → restart → stale approval replay** — A reviewer approved a bounded write. Its write capability was revoked before execution, and governance state survived a graceful restart. When the original approval was presented again, execution remained unauthorized. [Revocation and restart closeout](docs/QUALIFICATION_APPROVED_REVIEW_REVOCATION_RESTART.md)
 - **Foreign principal presents another principal's approved review** — A second principal authenticated with its own credential and presented the first principal's exact approved operation and original review ID. The Gateway refused the request before review consumption. The original review remained approved and unconsumed. [Foreign principal ingress refusal closeout](docs/QUALIFICATION_FOREIGN_PRINCIPAL_INGRESS_REFUSAL.md)
+- Credential replacement and original-review replay on Memory and SQLite. [H3 closeout](docs/QUALIFICATION_CREDENTIAL_ROTATION.md)
+- Authority contraction across credential replacement on SQLite. Three cases passed and one lacked a runtime prerequisite. [H4 closeout](docs/QUALIFICATION_AUTHORITY_CONTRACTION.md)
 
 These are scoped qualification results, not claims of general certification. Each closeout documents the tested boundary, retained evidence, adversarial false-PASS hardening, and explicit exclusions.
 

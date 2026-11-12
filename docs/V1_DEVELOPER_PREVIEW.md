@@ -130,3 +130,7 @@ Distribution remains repository clone plus `npm ci`; `private: true` intentional
 Independent adapters are permitted under the license's interoperability boundary and may carry their authors' own terms. Truthful results and criticism may be published; no certification or endorsement follows from a passing run. External code contributions are not currently solicited pending contribution/IP terms; [issue reports, discussion and independent work remain welcome](../CONTRIBUTING.md).
 
 [AI-assisted setup](../README.md#ai-assisted-setup-optional) is optional. The documented CLI/protocol path remains primary. An assistant must not weaken the core, assertions, evidence requirements or expected results to make a runtime pass. These repository-material changes do not alter the stable/experimental contract above.
+
+## Credential rotation suites
+
+The Gateway exposes three opt-in suites, `h3-memory`, `h3-sqlite` and `h4-sqlite`. The portable `current` catalog continues to contain ten scenarios. Inspect individual result rows, including H4 CR-03 UNSUPPORTED. [Public RC.4 reproduction](H3_H4_REPRODUCTION.md)

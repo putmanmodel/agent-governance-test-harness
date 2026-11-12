@@ -25,8 +25,8 @@ test('static discovery lists runtime profiles and all capability names', async (
   const runtimes = await cli(['runtimes']); assert.equal(runtimes.code,0);
   for (const id of ['subprocess-reference','kingpin-rc2-governance','kingpin-rc2-gateway','subprocess (external']) assert.ok(runtimes.out[0].includes(id));
   const capabilities = await cli(['capabilities']); assert.equal(capabilities.code,0);
-  assert.equal(capabilities.out[0].split('\n').length,7);
-  for (const id of ['revocation','human-review','execution-accounting','durable-restart','reconciliation','multi-principal','in-flight-observation']) assert.ok(capabilities.out[0].includes(id+':'));
+  assert.equal(capabilities.out[0].split('\n').length,10);
+  for (const id of ['memory-credential-rotation','revocation','human-review','execution-accounting','durable-restart','reconciliation','multi-principal','in-flight-observation']) assert.ok(capabilities.out[0].includes(id+':'));
   assert.equal((await cli(['runtimes','--runtime','subprocess'])).code,1);
 });
 const failure = { invariantId:'fixture-invariant',name:'Fixture invariant',passed:false,reason:'Retry redispatched',evidence:[2] };

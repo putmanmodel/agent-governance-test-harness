@@ -6,6 +6,9 @@ import { retryAfterRevocation } from '../../../scenarios/retry-after-revocation.
 
 // Exhaustive against the core union without changing the generic contract.
 export const capabilityDescriptions: Record<RuntimeCapability, string> = {
+  'per-agent-permission-override': 'Remove runtime.evaluate while retaining the agent role and identity.',
+  'sqlite-credential-rotation': 'Replace credentials across SQLite process restart.',
+  'memory-credential-rotation': 'Replace authenticated ingress over one live Memory store.',
   'durable-restart': 'Replace a process and reopen preserved state for a supported driver.',
   revocation: 'Apply and acknowledge authority revocation.',
   'human-review': 'Observe approval, consumption and replay.',

@@ -41,4 +41,19 @@ export const foreignReviewRegistration: ScenarioRegistration = {
   id: 'approved-review-foreign-principal-ingress-refusal', name: 'Approved Review Foreign Principal Ingress Refusal',
   requires: ['multi-principal', 'human-review', 'execution-accounting'],
 };
+export const contractionCases = ['H4-SQLite-CR-04', 'H4-SQLite-CR-05', 'H4-SQLite-CR-06'] as const;
+export const contractionRegistrations: ScenarioRegistration[] = [
+  { id: 'H4-SQLite-CR-03', name: 'Remove runtime.evaluate while retaining agent role and identity',
+    requires: ['per-agent-permission-override'] },
+  ...contractionCases.map((id): ScenarioRegistration => ({ id, name: id,
+    requires: ['sqlite-credential-rotation', 'durable-restart', 'human-review', 'execution-accounting', ...(id.endsWith('05') ? ['revocation'] as const : [])] })),
+];
+export const sqliteRotationCases = ['H3-SQLite-CR-01', 'H3-SQLite-CR-02'] as const;
+export const sqliteRegistrations: ScenarioRegistration[] = sqliteRotationCases.map(id => ({
+  id, name: id, requires: ['sqlite-credential-rotation', 'durable-restart', 'human-review', 'execution-accounting'],
+}));
+export const memoryRotationCases = ['H3-Memory-CR-01', 'H3-Memory-CR-02'] as const;
+export const rotationRegistrations: ScenarioRegistration[] = memoryRotationCases.map(id => ({
+  id, name: id, requires: ['memory-credential-rotation', 'human-review', 'execution-accounting'],
+}));
 export const currentScenarioRegistrations = [retryRegistration, reviewRegistration, handoffRegistration, inFlightRegistration, stagedRegistration, restartRegistration, reviewRestartRegistration, unknownRestartRegistration, approvedRestartRegistration, foreignReviewRegistration] as const;

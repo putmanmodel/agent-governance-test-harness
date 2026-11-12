@@ -1,7 +1,7 @@
 import { failedAssertions } from '../scenario-result.ts';
 import type { ScenarioDriverResult, FailureDiagnostic, ArtifactReference } from '../scenario-result.ts';
 
-export type RuntimeCapability = 'revocation' | 'human-review' | 'execution-accounting'
+export type RuntimeCapability = 'per-agent-permission-override' | 'sqlite-credential-rotation' | 'memory-credential-rotation' | 'revocation' | 'human-review' | 'execution-accounting'
   | 'durable-restart' | 'reconciliation' | 'multi-principal' | 'in-flight-observation';
 
 export interface RuntimeDeclaration {

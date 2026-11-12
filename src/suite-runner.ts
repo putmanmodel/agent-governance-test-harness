@@ -2,11 +2,14 @@ import { mkdir, mkdtemp } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { writeJsonl } from './reporters/jsonl-reporter.ts';
 import type { ArtifactReference, ScenarioCaseResult } from './scenario-result.ts';
-import { currentScenarioRegistrations } from '../scenarios/registrations.ts';
+import { contractionRegistrations, sqliteRegistrations, rotationRegistrations, currentScenarioRegistrations } from '../scenarios/registrations.ts';
 import { runApplicable, summarizeApplicability } from './core/applicability.ts';
 import type { RuntimeProfile } from './runtime-registry.ts';
 
 export function getSuite(id: string) {
+  if (id === 'h4-sqlite') return { id, scenarios: contractionRegistrations };
+  if (id === 'h3-sqlite') return { id, scenarios: sqliteRegistrations };
+  if (id === 'h3-memory') return { id, scenarios: rotationRegistrations };
   if (id !== 'current') throw new Error(`Unknown suite: ${id}`);
   return { id, scenarios: currentScenarioRegistrations };
 }

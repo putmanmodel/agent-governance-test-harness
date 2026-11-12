@@ -3,7 +3,7 @@ import type { RuntimeDeclaration } from './core/applicability.ts';
 import type { ScenarioRegistration } from './core/applicability.ts';
 import { rc2GatewayRuntime, rc2GovernanceRuntime } from './adapters/kingpin-rc2/capabilities.ts';
 import { subprocessReferenceRuntime } from './adapters/subprocess/capabilities.ts';
-import { gatewayRetryRegistration } from '../scenarios/registrations.ts';
+import { contractionCases, sqliteRotationCases, memoryRotationCases, gatewayRetryRegistration } from '../scenarios/registrations.ts';
 
 export interface RuntimeProfile {
   runtime: RuntimeDeclaration;
@@ -40,6 +40,9 @@ export const runtimeProfiles: Readonly<Record<string, RuntimeProfile>> = {
     requirements: { 'retry-after-revocation': gatewayRetryRegistration },
     drivers: {
       'retry-after-revocation': async () => (await import('./adapters/kingpin-rc2/gateway-scenario.ts')).runGatewayScenario(),
+      ...Object.fromEntries(contractionCases.map(id => [id, async () => (await import('./adapters/kingpin-rc2/h3-sqlite.ts')).runSqliteRotation(id)])),
+      ...Object.fromEntries(sqliteRotationCases.map(id => [id, async () => (await import('./adapters/kingpin-rc2/h3-sqlite.ts')).runSqliteRotation(id)])),
+      ...Object.fromEntries(memoryRotationCases.map(id => [id, async () => (await import('./adapters/kingpin-rc2/h3-memory.ts')).runMemoryRotation(id)])),
       'human-approval-replay': async () => (await import('./adapters/kingpin-rc2/review.ts')).runHumanApprovalReplay(),
       'approved-review-foreign-principal-ingress-refusal': async () => (await import('./adapters/kingpin-rc2/foreign-review.ts')).runForeignReview(),
       'delegated-handoff': async () => (await import('./adapters/kingpin-rc2/handoff.ts')).runDelegatedHandoff(),
